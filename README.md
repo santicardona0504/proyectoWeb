@@ -157,6 +157,11 @@ Todas las respuestas son JSON con la siguiente estructura:
 - Catálogo con tabla de libros y búsqueda por título, autor o género
 - Agregar libro con formulario validado (incluye validación de ISBN)
 - Botón Prestar/Devolver para cambiar disponibilidad
+---
+
+## Tests
+
+Los tests se implementarán en un futuro.
 
 ---
 
