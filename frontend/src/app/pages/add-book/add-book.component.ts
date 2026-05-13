@@ -1,17 +1,19 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { BookService } from '../../services/book.service';
 
 @Component({
   selector: 'app-add-book',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="add-book-page">
       <h1 class="page-title">Agregar Nuevo Libro</h1>
       <p class="page-subtitle">Completa todos los campos obligatorios</p>
+
+      <div class="error-msg-general" *ngIf="errorMsg">{{ errorMsg }}</div>
 
       <form #bookForm="ngForm" (ngSubmit)="onSubmit(bookForm)" class="book-form" novalidate>
         <div class="form-group">
@@ -81,14 +83,14 @@ import { BookService } from '../../services/book.service';
               #anioCtrl="ngModel"
               required
               min="1000"
-              max="2026"
+              [max]="currentYear"
               placeholder="Ej: 1967"
               class="form-control"
               [class.invalid]="anioCtrl.invalid && anioCtrl.touched"
             />
             <span class="error-msg" *ngIf="anioCtrl.invalid && anioCtrl.touched">
               <span *ngIf="anioCtrl.errors?.['required']">El año es obligatorio</span>
-              <span *ngIf="anioCtrl.errors?.['min'] || anioCtrl.errors?.['max']">Año entre 1000 y 2026</span>
+              <span *ngIf="anioCtrl.errors?.['min'] || anioCtrl.errors?.['max']">Año entre 1000 y {{ currentYear }}</span>
             </span>
           </div>
         </div>
@@ -185,6 +187,7 @@ import { BookService } from '../../services/book.service';
       margin-top: 2rem;
     }
     .btn[disabled] { opacity: .6; cursor: not-allowed; }
+    .error-msg-general { background: #f8d7da; color: #721c24; padding: .75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-weight: 500; text-align: center; }
     .success-msg {
       margin-top: 1rem;
       background: #d4edda;
@@ -215,8 +218,10 @@ export class AddBookComponent {
     categoria: ''
   };
 
+  currentYear = new Date().getFullYear();
   submitting = false;
   success = false;
+  errorMsg = '';
 
   constructor(
     private bookService: BookService,
@@ -227,6 +232,7 @@ export class AddBookComponent {
     if (form.invalid) return;
     this.submitting = true;
     this.success = false;
+    this.errorMsg = '';
 
     this.bookService.addBook({
       titulo: this.model.titulo,
@@ -243,8 +249,9 @@ export class AddBookComponent {
         this.model = { titulo: '', autor: '', isbn: '', anio: null, categoria: '' };
         setTimeout(() => this.router.navigate(['/books']), 1500);
       },
-      error: () => {
+      error: (err) => {
         this.submitting = false;
+        this.errorMsg = err.error?.error || 'Error al guardar el libro';
       }
     });
   }

@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const logger = require('../utils/logger');
 
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
@@ -9,7 +10,7 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-  console.error('Error inesperado en el pool de PostgreSQL:', err.message);
+  logger.error({ err }, 'Error inesperado en el pool de PostgreSQL');
 });
 
 module.exports = pool;

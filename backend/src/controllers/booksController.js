@@ -1,13 +1,112 @@
 const pool = require('../config/db');
 const { success, error } = require('../utils/jsonResponse');
+const logger = require('../utils/logger');
+
+const ALLOWED_FIELDS = ['titulo', 'autor', 'categoria', 'isbn', 'anio', 'disponible'];
+const MAX_STR_LENGTH = 255;
+
+function validateISBN(isbn) {
+  if (!isbn) return true;
+  return /^(?:\d{9}[\dXx]|\d{13}|\d-\d{5}-\d{3}-[\dX])$/.test(isbn);
+}
+
+function validateBookInput(body, requireAll) {
+  const errors = [];
+  const { titulo, autor, categoria, isbn, anio } = body;
+
+  if (requireAll || titulo !== undefined) {
+    if (!titulo || typeof titulo !== 'string' || !titulo.trim()) {
+      errors.push('titulo debe ser un texto no vacío');
+    } else if (titulo.length > MAX_STR_LENGTH) {
+      errors.push(`titulo no debe exceder ${MAX_STR_LENGTH} caracteres`);
+    }
+  }
+
+  if (requireAll || autor !== undefined) {
+    if (!autor || typeof autor !== 'string' || !autor.trim()) {
+      errors.push('autor debe ser un texto no vacío');
+    } else if (autor.length > MAX_STR_LENGTH) {
+      errors.push(`autor no debe exceder ${MAX_STR_LENGTH} caracteres`);
+    }
+  }
+
+  if (requireAll || categoria !== undefined) {
+    if (!categoria || typeof categoria !== 'string' || !categoria.trim()) {
+      errors.push('categoria debe ser un texto no vacío');
+    } else if (categoria.length > 100) {
+      errors.push('categoria no debe exceder 100 caracteres');
+    }
+  }
+
+  if (isbn !== undefined && isbn !== null && isbn !== '') {
+    if (typeof isbn !== 'string' || !validateISBN(isbn)) {
+      errors.push('isbn tiene un formato inválido');
+    } else if (isbn.length > 20) {
+      errors.push('isbn no debe exceder 20 caracteres');
+    }
+  }
+
+  if (anio !== undefined && anio !== null) {
+    const anioNum = parseInt(anio, 10);
+    if (isNaN(anioNum) || anioNum < 1000 || anioNum > new Date().getFullYear()) {
+      errors.push(`anio debe ser un número entre 1000 y ${new Date().getFullYear()}`);
+    }
+  }
+
+  return errors;
+}
 
 async function getAll(req, res) {
   try {
-    const result = await pool.query('SELECT * FROM books ORDER BY id');
-    success(res, result.rows);
+    const search = req.query?.search || '';
+    const page = Math.max(1, parseInt(req.query?.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query?.limit, 10) || 50));
+    const offset = (page - 1) * limit;
+
+    if (search) {
+      const countResult = await pool.query(
+        `SELECT COUNT(*) FROM books WHERE titulo ILIKE $1 OR autor ILIKE $1 OR categoria ILIKE $1`,
+        [`%${search}%`]
+      );
+      const total = parseInt(countResult.rows[0].count, 10);
+      const result = await pool.query(
+        `SELECT * FROM books WHERE titulo ILIKE $1 OR autor ILIKE $1 OR categoria ILIKE $1 ORDER BY id LIMIT $2 OFFSET $3`,
+        [`%${search}%`, limit, offset]
+      );
+      success(res, {
+        books: result.rows,
+        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+      });
+    } else {
+      const countResult = await pool.query('SELECT COUNT(*) FROM books');
+      const total = parseInt(countResult.rows[0].count, 10);
+      const result = await pool.query(
+        'SELECT * FROM books ORDER BY id LIMIT $1 OFFSET $2',
+        [limit, offset]
+      );
+      success(res, {
+        books: result.rows,
+        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+      });
+    }
   } catch (err) {
-    console.error('Error en getAll:', err.message);
+    logger.error('Error en getAll:', err.message);
     error(res, 'Error al obtener los libros de la base de datos', 500);
+  }
+}
+
+async function getStats(req, res) {
+  try {
+    const result = await pool.query(
+      `SELECT COUNT(*) AS total,
+              COUNT(*) FILTER (WHERE disponible = true) AS available,
+              COUNT(*) FILTER (WHERE disponible = false) AS borrowed
+       FROM books`
+    );
+    success(res, result.rows[0]);
+  } catch (err) {
+    logger.error('Error en getStats:', err.message);
+    error(res, 'Error al obtener estadísticas', 500);
   }
 }
 
@@ -19,7 +118,7 @@ async function getById(req, res, id) {
     }
     success(res, result.rows[0]);
   } catch (err) {
-    console.error('Error en getById:', err.message);
+    logger.error('Error en getById:', err.message);
     error(res, 'Error al obtener el libro', 500);
   }
 }
@@ -27,21 +126,22 @@ async function getById(req, res, id) {
 async function create(req, res) {
   try {
     const { titulo, autor, categoria, isbn, anio, disponible } = req.body;
+    const errors = validateBookInput(req.body, true);
 
-    if (!titulo || !autor || !categoria) {
-      return error(res, 'Los campos titulo, autor y categoria son obligatorios', 400);
+    if (errors.length > 0) {
+      return error(res, `Datos inválidos: ${errors.join('. ')}`, 400);
     }
 
     const result = await pool.query(
       `INSERT INTO books (titulo, autor, categoria, isbn, anio, disponible)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [titulo, autor, categoria, isbn || null, anio || null, disponible !== undefined ? disponible : true]
+      [titulo.trim(), autor.trim(), categoria.trim(), isbn || null, anio || null, disponible !== undefined ? disponible : true]
     );
 
     success(res, result.rows[0], 201);
   } catch (err) {
-    console.error('Error en create:', err.message);
+    logger.error('Error en create:', err.message);
     error(res, 'Error al crear el libro', 500);
   }
 }
@@ -49,9 +149,10 @@ async function create(req, res) {
 async function update(req, res, id) {
   try {
     const { titulo, autor, categoria, isbn, anio, disponible } = req.body;
+    const errors = validateBookInput(req.body, true);
 
-    if (!titulo || !autor || !categoria) {
-      return error(res, 'Los campos titulo, autor y categoria son obligatorios', 400);
+    if (errors.length > 0) {
+      return error(res, `Datos inválidos: ${errors.join('. ')}`, 400);
     }
 
     const result = await pool.query(
@@ -59,7 +160,7 @@ async function update(req, res, id) {
        SET titulo = $1, autor = $2, categoria = $3, isbn = $4, anio = $5, disponible = $6
        WHERE id = $7
        RETURNING *`,
-      [titulo, autor, categoria, isbn || null, anio || null, disponible !== undefined ? disponible : true, id]
+      [titulo.trim(), autor.trim(), categoria.trim(), isbn || null, anio || null, disponible !== undefined ? disponible : true, id]
     );
 
     if (result.rows.length === 0) {
@@ -68,22 +169,28 @@ async function update(req, res, id) {
 
     success(res, result.rows[0]);
   } catch (err) {
-    console.error('Error en update:', err.message);
+    logger.error('Error en update:', err.message);
     error(res, 'Error al actualizar el libro', 500);
   }
 }
 
 async function patch(req, res, id) {
   try {
+    const errors = validateBookInput(req.body, false);
+    if (errors.length > 0) {
+      return error(res, `Datos inválidos: ${errors.join('. ')}`, 400);
+    }
+
     const fields = [];
     const values = [];
     let idx = 1;
 
     for (const [key, value] of Object.entries(req.body)) {
-      const allowed = ['titulo', 'autor', 'categoria', 'isbn', 'anio', 'disponible'];
-      if (allowed.includes(key)) {
+      if (ALLOWED_FIELDS.includes(key)) {
+        const val = (key === 'titulo' || key === 'autor' || key === 'categoria') && typeof value === 'string'
+          ? value.trim() : value;
         fields.push(`${key} = $${idx++}`);
-        values.push(value);
+        values.push(val);
       }
     }
 
@@ -103,7 +210,7 @@ async function patch(req, res, id) {
 
     success(res, result.rows[0]);
   } catch (err) {
-    console.error('Error en patch:', err.message);
+    logger.error('Error en patch:', err.message);
     error(res, 'Error al actualizar el libro', 500);
   }
 }
@@ -116,9 +223,9 @@ async function remove(req, res, id) {
     }
     success(res, { mensaje: `Libro "${result.rows[0].titulo}" eliminado correctamente` });
   } catch (err) {
-    console.error('Error en remove:', err.message);
+    logger.error('Error en remove:', err.message);
     error(res, 'Error al eliminar el libro', 500);
   }
 }
 
-module.exports = { getAll, getById, create, update, patch, remove };
+module.exports = { getAll, getById, create, update, patch, remove, getStats };

@@ -14,7 +14,7 @@ import { Book } from '../../models/book.model';
       <div class="page-header">
         <div>
           <h1 class="page-title">Catálogo de Libros</h1>
-          <p class="page-subtitle">{{ books.length }} libros en la biblioteca</p>
+          <p class="page-subtitle">{{ total }} libros en la biblioteca</p>
         </div>
         <a routerLink="/books/add" class="btn btn-primary">+ Agregar Libro</a>
       </div>
@@ -23,12 +23,14 @@ import { Book } from '../../models/book.model';
         <input
           type="text"
           [(ngModel)]="searchTerm"
-          (input)="filterBooks()"
+          (keyup.enter)="filterBooks()"
           placeholder="Buscar por título, autor o género..."
           class="search-input"
         />
+        <button class="btn btn-primary btn-search" (click)="filterBooks()">Buscar</button>
       </div>
 
+      <div class="error-banner" *ngIf="errorMsg">{{ errorMsg }}</div>
       <div class="loading" *ngIf="loading">Cargando libros...</div>
 
       <div class="table-container" *ngIf="!loading">
@@ -45,7 +47,7 @@ import { Book } from '../../models/book.model';
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let book of filteredBooks">
+            <tr *ngFor="let book of books">
               <td class="cell-title">{{ book.titulo }}</td>
               <td>{{ book.autor }}</td>
               <td><span class="genre-tag">{{ book.categoria }}</span></td>
@@ -67,11 +69,17 @@ import { Book } from '../../models/book.model';
                 </button>
               </td>
             </tr>
-            <tr *ngIf="filteredBooks.length === 0">
+            <tr *ngIf="books.length === 0">
               <td colspan="7" class="empty-msg">No se encontraron libros.</td>
             </tr>
           </tbody>
         </table>
+
+        <div class="pagination" *ngIf="totalPages > 1">
+          <button class="btn btn-sm" [disabled]="page <= 1" (click)="goToPage(page - 1)">Anterior</button>
+          <span class="page-info">Página {{ page }} de {{ totalPages }}</span>
+          <button class="btn btn-sm" [disabled]="page >= totalPages" (click)="goToPage(page + 1)">Siguiente</button>
+        </div>
       </div>
     </div>
   `,
@@ -156,38 +164,72 @@ import { Book } from '../../models/book.model';
     .status-badge.borrowed { background: #f8d7da; color: #721c24; }
     .empty-msg { text-align: center; color: var(--text-light); padding: 3rem !important; }
     .btn-sm { padding: .4rem .9rem; font-size: .82rem; }
+    .error-banner { background: #f8d7da; color: #721c24; padding: .75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .page-info { font-size: .9rem; color: var(--text-light); }
+    .btn-search { margin-top: .5rem; }
+    .search-bar { display: flex; gap: .5rem; align-items: flex-start; flex-wrap: wrap; }
   `]
 })
 export class BookListComponent implements OnInit {
   books: Book[] = [];
-  filteredBooks: Book[] = [];
   searchTerm = '';
   loading = true;
+  errorMsg = '';
+  page = 1;
+  limit = 20;
+  totalPages = 1;
+  total = 0;
 
   constructor(private bookService: BookService) {}
 
   ngOnInit() {
-    this.bookService.getBooks().subscribe(books => {
-      this.books = books;
-      this.filteredBooks = books;
-      this.loading = false;
+    this.loadBooks();
+  }
+
+  loadBooks() {
+    this.loading = true;
+    this.errorMsg = '';
+    this.bookService.getBooks(this.searchTerm, this.page, this.limit).subscribe({
+      next: (res) => {
+        this.books = res.books;
+        this.total = res.pagination.total;
+        this.totalPages = res.pagination.totalPages;
+        this.page = res.pagination.page;
+        this.loading = false;
+      },
+      error: () => {
+        this.errorMsg = 'Error al cargar libros';
+        this.loading = false;
+      }
     });
   }
 
   filterBooks() {
-    const term = this.searchTerm.toLowerCase().trim();
-    this.filteredBooks = this.books.filter(b =>
-      b.titulo.toLowerCase().includes(term) ||
-      b.autor.toLowerCase().includes(term) ||
-      b.categoria.toLowerCase().includes(term)
-    );
+    this.page = 1;
+    this.loadBooks();
+  }
+
+  goToPage(p: number) {
+    if (p < 1 || p > this.totalPages) return;
+    this.page = p;
+    this.loadBooks();
   }
 
   toggleBook(book: Book) {
-    this.bookService.toggleAvailability(book.id, !book.disponible).subscribe(updated => {
-      const idx = this.books.findIndex(b => b.id === updated.id);
-      if (idx !== -1) this.books[idx] = updated;
-      this.filterBooks();
+    this.bookService.toggleAvailability(book.id, !book.disponible).subscribe({
+      next: (updated) => {
+        const idx = this.books.findIndex(b => b.id === updated.id);
+        if (idx !== -1) this.books[idx] = updated;
+      },
+      error: () => { this.errorMsg = 'Error al cambiar disponibilidad'; }
     });
   }
 }

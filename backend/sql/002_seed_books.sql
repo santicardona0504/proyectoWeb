@@ -1,2 +1,0 @@
--- Los libros se agregan dinámicamente mediante el endpoint POST /books
--- Esta tabla se mantiene vacía al iniciar
