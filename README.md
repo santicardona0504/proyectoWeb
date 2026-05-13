@@ -6,10 +6,9 @@ Aplicación web full-stack para gestión de biblioteca con catálogo de libros, 
 
 | Capa      | Tecnología                                           |
 |-----------|------------------------------------------------------|
-| Backend   | Node.js nativo (sin Express) + PostgreSQL             |
-| Frontend  | Angular 18 (standalone components, sin NgModules)     |
+| Backend   | Node.js             |
+| Frontend  | Angular 18     |
 | Base de datos | PostgreSQL 16                                    |
-| Migraciones | node-pg-migrate                                      |
 | Contenedor | Docker Compose                                       |
 
 ## Requisitos
