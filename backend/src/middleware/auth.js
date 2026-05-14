@@ -34,4 +34,16 @@ function optionalAuth(req, res, next) {
   next();
 }
 
-module.exports = { generateToken, verifyToken, optionalAuth, JWT_SECRET };
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return error(res, 'Token de autenticación requerido', 401);
+    }
+    if (!roles.includes(req.user.rol)) {
+      return error(res, 'No tenés permisos para realizar esta acción', 403);
+    }
+    next();
+  };
+}
+
+module.exports = { generateToken, verifyToken, optionalAuth, requireRole, JWT_SECRET };

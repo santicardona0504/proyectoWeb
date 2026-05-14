@@ -1,7 +1,7 @@
 const booksController = require('../controllers/booksController');
 const authController = require('../controllers/authController');
 const loansController = require('../controllers/loansController');
-const { verifyToken, optionalAuth } = require('../middleware/auth');
+const { verifyToken, optionalAuth, requireRole } = require('../middleware/auth');
 const { error } = require('../utils/jsonResponse');
 
 function parseURL(reqUrl) {
@@ -54,7 +54,7 @@ async function router(req, res) {
         req.query = params;
         return await booksController.getAll(req, res);
       case 'POST':
-        return verifyToken(req, res, () => booksController.create(req, res));
+        return verifyToken(req, res, () => requireRole('admin')(req, res, () => booksController.create(req, res)));
       default:
         return error(res, `Método ${method} no permitido en /books`, 405);
     }
@@ -65,11 +65,11 @@ async function router(req, res) {
       case 'GET':
         return await booksController.getById(req, res, id);
       case 'PUT':
-        return verifyToken(req, res, () => booksController.update(req, res, id));
+        return verifyToken(req, res, () => requireRole('admin')(req, res, () => booksController.update(req, res, id)));
       case 'PATCH':
-        return verifyToken(req, res, () => booksController.patch(req, res, id));
+        return verifyToken(req, res, () => requireRole('admin')(req, res, () => booksController.patch(req, res, id)));
       case 'DELETE':
-        return verifyToken(req, res, () => booksController.remove(req, res, id));
+        return verifyToken(req, res, () => requireRole('admin')(req, res, () => booksController.remove(req, res, id)));
       default:
         return error(res, `Método ${method} no permitido en /books/${id}`, 405);
     }
