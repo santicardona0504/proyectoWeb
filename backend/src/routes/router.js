@@ -1,81 +1,40 @@
+const { Router } = require('express');
 const booksController = require('../controllers/booksController');
 const authController = require('../controllers/authController');
 const loansController = require('../controllers/loansController');
+const usersController = require('../controllers/usersController');
 const { verifyToken, optionalAuth, requireRole } = require('../middleware/auth');
-const { error } = require('../utils/jsonResponse');
 
-function parseURL(reqUrl) {
-  try {
-    const url = new URL(reqUrl, 'http://localhost');
-    const pathname = url.pathname.replace(/\/+$/, '') || '/';
-    const params = Object.fromEntries(url.searchParams.entries());
-    return { pathname, params };
-  } catch {
-    return { pathname: '/', params: {} };
-  }
-}
+const router = Router();
 
-function matchRoute(pathname) {
-  const match = pathname.match(/^\/books(?:\/(\d+))?$/);
-  if (!match) return null;
-  return { id: match[1] ? parseInt(match[1], 10) : null };
-}
+// Auth routes
+router.post('/auth/register', authController.register);
+router.post('/auth/login', authController.login);
+router.post('/auth/refresh', authController.refresh);
+router.get('/auth/me', verifyToken, authController.me);
+router.post('/auth/logout', authController.logout);
 
-async function router(req, res) {
-  const { pathname, params } = parseURL(req.url);
-  const route = matchRoute(pathname);
-  const method = req.method;
+// Users routes (admin only)
+router.get('/users', verifyToken, requireRole('admin'), usersController.getAll);
+router.get('/users/:id', verifyToken, requireRole('admin'), usersController.getById);
+router.patch('/users/:id/role', verifyToken, requireRole('admin'), usersController.updateRole);
+router.patch('/users/:id/reset-password', verifyToken, requireRole('admin'), usersController.resetPassword);
+router.delete('/users/:id', verifyToken, requireRole('admin'), usersController.remove);
 
-  // Auth routes (públicas)
-  if (pathname === '/auth/register' && method === 'POST') return await authController.register(req, res);
-  if (pathname === '/auth/login' && method === 'POST') return await authController.login(req, res);
+// Loans routes
+router.get('/loans', verifyToken, loansController.getAll);
+router.get('/loans/active', verifyToken, loansController.getActive);
+router.get('/loans/user', verifyToken, loansController.getByUser);
+router.post('/loans', optionalAuth, loansController.create);
+router.post('/loans/return', verifyToken, loansController.returnBook);
 
-  // Loans routes (protegidas)
-  if (pathname === '/loans' && method === 'GET') return verifyToken(req, res, () => loansController.getAll(req, res));
-  if (pathname === '/loans/active' && method === 'GET') return verifyToken(req, res, () => loansController.getActive(req, res));
-  if (pathname === '/loans/user' && method === 'GET') return verifyToken(req, res, () => loansController.getByUser(req, res));
-  if (pathname === '/loans' && method === 'POST') return optionalAuth(req, res, () => loansController.create(req, res));
-  if (pathname === '/loans/return' && method === 'POST') return verifyToken(req, res, () => loansController.returnBook(req, res));
-
-  // Book stats
-  if (pathname === '/books/stats' && method === 'GET') {
-    return await booksController.getStats(req, res);
-  }
-
-  if (!route) {
-    return error(res, `Ruta ${method} ${pathname} no encontrada`, 404);
-  }
-
-  const { id } = route;
-
-  if (pathname === '/books' && !id) {
-    switch (method) {
-      case 'GET':
-        req.query = params;
-        return await booksController.getAll(req, res);
-      case 'POST':
-        return verifyToken(req, res, () => requireRole('admin')(req, res, () => booksController.create(req, res)));
-      default:
-        return error(res, `Método ${method} no permitido en /books`, 405);
-    }
-  }
-
-  if (id) {
-    switch (method) {
-      case 'GET':
-        return await booksController.getById(req, res, id);
-      case 'PUT':
-        return verifyToken(req, res, () => requireRole('admin')(req, res, () => booksController.update(req, res, id)));
-      case 'PATCH':
-        return verifyToken(req, res, () => requireRole('admin')(req, res, () => booksController.patch(req, res, id)));
-      case 'DELETE':
-        return verifyToken(req, res, () => requireRole('admin')(req, res, () => booksController.remove(req, res, id)));
-      default:
-        return error(res, `Método ${method} no permitido en /books/${id}`, 405);
-    }
-  }
-
-  return error(res, `Ruta ${method} ${pathname} no encontrada`, 404);
-}
+// Books routes
+router.get('/books/stats', booksController.getStats);
+router.get('/books', booksController.getAll);
+router.get('/books/:id', booksController.getById);
+router.post('/books', verifyToken, requireRole('admin'), booksController.create);
+router.put('/books/:id', verifyToken, requireRole('admin'), booksController.update);
+router.patch('/books/:id', verifyToken, requireRole('admin'), booksController.patch);
+router.delete('/books/:id', verifyToken, requireRole('admin'), booksController.remove);
 
 module.exports = router;

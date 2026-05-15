@@ -20,6 +20,7 @@ import { AuthService } from '../../services/auth.service';
         <div class="nav-links" [class.open]="menuOpen">
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeMenu()">Inicio</a>
           <a routerLink="/books" routerLinkActive="active" (click)="closeMenu()">Libros</a>
+          <a routerLink="/loans" routerLinkActive="active" (click)="closeMenu()" *ngIf="auth.isAdmin() || auth.currentUser()?.rol === 'bibliotecario'">Préstamos</a>
           <a routerLink="/books/add" routerLinkActive="active" (click)="closeMenu()" *ngIf="auth.isAdmin()">Agregar Libro</a>
         </div>
         <div class="nav-actions" [class.open]="menuOpen">
@@ -155,14 +156,14 @@ import { AuthService } from '../../services/auth.service';
       .nav-actions.open { display: flex; top: auto; position: static; flex-direction: row; }
       .nav-links.open + .nav-actions { display: none; }
     }
-  `]
+  `],
 })
 export class NavbarComponent {
   menuOpen = false;
 
   constructor(
     public auth: AuthService,
-    private router: Router
+    private router: Router,
   ) {}
 
   toggleMenu() { this.menuOpen = !this.menuOpen; }

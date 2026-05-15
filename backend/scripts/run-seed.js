@@ -1,6 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
 
 const pool = new Pool({
@@ -20,6 +21,28 @@ async function runSeeds() {
     const sql = fs.readFileSync(path.join(seedsDir, file), 'utf8');
     await pool.query(sql);
     console.log(`Seed aplicado: ${file}`);
+  }
+
+  const adminExists = await pool.query(
+    "SELECT id FROM usuarios WHERE email = 'admin@biblioteca.com'"
+  );
+
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const password_hash = await bcrypt.hash(adminPassword, 10);
+
+  if (adminExists.rows.length === 0) {
+    await pool.query(
+      `INSERT INTO usuarios (nombre, email, password_hash, rol)
+       VALUES ('Admin', 'admin@biblioteca.com', $1, 'admin')`,
+      [password_hash]
+    );
+    console.log(`Usuario admin creado (email: admin@biblioteca.com, password: ${adminPassword})`);
+  } else {
+    await pool.query(
+      `UPDATE usuarios SET rol = 'admin', password_hash = $1 WHERE email = 'admin@biblioteca.com' AND (rol != 'admin' OR password_hash != $1)`,
+      [password_hash]
+    );
+    console.log(`Usuario admin verificado (email: admin@biblioteca.com)`);
   }
 
   await pool.end();

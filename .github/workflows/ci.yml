@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  backend-lint-test:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: library_test
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: './backend/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migrations
+        run: npm run migrate:up
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: library_test
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          JWT_SECRET: test-jwt-secret
+          NODE_ENV: test
+
+      - name: Run seed
+        run: npm run seed
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: library_test
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          JWT_SECRET: test-jwt-secret
+          NODE_ENV: test
+          ADMIN_PASSWORD: admin123
+
+      - name: Run tests
+        run: npm test
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: library_test
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          JWT_SECRET: test-jwt-secret
+          NODE_ENV: test
+
+      - name: Syntax check
+        run: node --check src/server.js
+
+  frontend-lint-build:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build

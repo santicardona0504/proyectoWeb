@@ -1,4 +1,4 @@
--- Up
+-- Up Migration
 CREATE TABLE IF NOT EXISTS prestamos (
   id SERIAL PRIMARY KEY,
   book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
@@ -9,5 +9,5 @@ CREATE TABLE IF NOT EXISTS prestamos (
   estado VARCHAR(20) DEFAULT 'activo' CHECK (estado IN ('activo', 'devuelto'))
 );
 
--- Down
+-- Down Migration
 DROP TABLE IF EXISTS prestamos;

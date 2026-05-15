@@ -1,13 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="auth-page">
       <div class="auth-card">
@@ -15,8 +17,6 @@ import { AuthService } from '../../services/auth.service';
           <h1>{{ isRegisterMode ? 'Crear Cuenta' : 'Iniciar Sesión' }}</h1>
           <p>{{ isRegisterMode ? 'Registrate para acceder al sistema' : 'Ingresá tus credenciales para continuar' }}</p>
         </div>
-
-        <div class="error-msg-general" *ngIf="errorMsg">{{ errorMsg }}</div>
 
         <form (ngSubmit)="onSubmit()" class="auth-form" novalidate>
           <div class="form-group" *ngIf="isRegisterMode">
@@ -146,10 +146,6 @@ import { AuthService } from '../../services/auth.service';
     }
     .btn-block { width: 100%; padding: .75rem; font-size: 1rem; }
     .btn[disabled] { opacity: .6; cursor: not-allowed; }
-    .error-msg-general {
-      background: #f8d7da; color: #721c24; padding: .75rem 1rem;
-      border-radius: 8px; margin-bottom: 1rem; font-weight: 500; text-align: center;
-    }
     .auth-footer {
       text-align: center;
       margin-top: 1.5rem;
@@ -167,50 +163,46 @@ import { AuthService } from '../../services/auth.service';
       font-family: inherit;
     }
     .btn-link:hover { text-decoration: underline; }
-  `]
+  `],
 })
-export class LoginComponent {
+export class LoginComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private toast = inject(ToastService);
+
   isRegisterMode = false;
   nombre = '';
   email = '';
   password = '';
   submitting = false;
-  errorMsg = '';
-
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
 
   toggleMode() {
     this.isRegisterMode = !this.isRegisterMode;
-    this.errorMsg = '';
   }
 
   onSubmit() {
-    this.errorMsg = '';
     this.submitting = true;
 
-    if (this.isRegisterMode) {
-      this.authService.register(this.nombre, this.email, this.password).subscribe({
-        next: () => {
-          this.router.navigate(['/']);
-        },
-        error: (err) => {
-          this.submitting = false;
-          this.errorMsg = err.error?.error || 'Error al registrarse';
-        }
-      });
-    } else {
-      this.authService.login(this.email, this.password).subscribe({
-        next: () => {
-          this.router.navigate(['/']);
-        },
-        error: (err) => {
-          this.submitting = false;
-          this.errorMsg = err.error?.error || 'Error al iniciar sesión';
-        }
-      });
-    }
+    const obs$ = this.isRegisterMode
+      ? this.authService.register(this.nombre, this.email, this.password)
+      : this.authService.login(this.email, this.password);
+
+    obs$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.submitting = false;
+        this.toast.success(this.isRegisterMode ? 'Cuenta creada correctamente' : 'Sesión iniciada');
+        this.router.navigate(['/']);
+      },
+      error: (err) => {
+        this.submitting = false;
+        this.toast.error(err.error?.error || 'Error al procesar la solicitud');
+      },
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

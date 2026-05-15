@@ -10,14 +10,27 @@
     "migrate:down": "node-pg-migrate down --config pgmconfig.js",
     "migrate:create": "node-pg-migrate create --config pgmconfig.js --migration-file-language sql",
     "seed": "node scripts/run-seed.js",
-    "db:setup": "npm run migrate:up && npm run seed"
+    "db:setup": "npm run migrate:up && npm run seed",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --forceExit",
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "node-pg-migrate": "^8.0.4",
     "pg": "^8.13.0",
-    "pino": "^10.3.1"
+    "pino": "^10.3.1",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
   }
 }

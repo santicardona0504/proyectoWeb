@@ -1,13 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './components/navbar/navbar.component';
+import { ToastComponent } from './components/toast/toast.component';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent],
+  imports: [RouterOutlet, NavbarComponent, ToastComponent],
   template: `
     <app-navbar></app-navbar>
+    <app-toast></app-toast>
     <main class="main-content">
       <router-outlet />
     </main>
@@ -30,8 +33,13 @@ import { NavbarComponent } from './components/navbar/navbar.component';
       font-size: .85rem;
     }
     .footer p { margin: 0; }
-  `]
+  `],
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
+  private authService = inject(AuthService);
   year = new Date().getFullYear();
+
+  ngOnInit() {
+    this.authService.init();
+  }
 }

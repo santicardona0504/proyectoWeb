@@ -1,36 +1,112 @@
 const jwt = require('jsonwebtoken');
 const { error } = require('../utils/jsonResponse');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'biblioteca-secret-dev';
+const JWT_SECRET = process.env.JWT_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET || JWT_SECRET;
 
-function generateToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
+const ACCESS_TOKEN_EXPIRY = '15m';
+const REFRESH_TOKEN_EXPIRY = '7d';
+
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  path: '/',
+};
+
+function generateAccessToken(payload) {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
+}
+
+function generateRefreshToken(payload) {
+  return jwt.sign(payload, REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+}
+
+function setTokenCookies(res, accessToken, refreshToken) {
+  res.cookie('access_token', accessToken, {
+    ...COOKIE_OPTIONS,
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie('refresh_token', refreshToken, {
+    ...COOKIE_OPTIONS,
+    path: '/auth',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+}
+
+function clearTokenCookies(res) {
+  res.clearCookie('access_token', { ...COOKIE_OPTIONS });
+  res.clearCookie('refresh_token', { ...COOKIE_OPTIONS, path: '/auth' });
 }
 
 function verifyToken(req, res, next) {
-  const header = req.headers['authorization'];
-  if (!header || !header.startsWith('Bearer ')) {
+  const accessToken = req.cookies?.access_token;
+
+  if (accessToken) {
+    try {
+      req.user = jwt.verify(accessToken, JWT_SECRET);
+      return next();
+    } catch {
+      // access token expired or invalid, try refresh
+    }
+  }
+
+  const refreshToken = req.cookies?.refresh_token;
+  if (!refreshToken) {
     return error(res, 'Token de autenticación requerido', 401);
   }
 
   try {
-    const token = header.split(' ')[1];
-    req.user = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
+    const payload = { id: decoded.id, email: decoded.email, rol: decoded.rol };
+    const newAccessToken = generateAccessToken(payload);
+    const newRefreshToken = generateRefreshToken(payload);
+
+    res.cookie('access_token', newAccessToken, {
+      ...COOKIE_OPTIONS,
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refresh_token', newRefreshToken, {
+      ...COOKIE_OPTIONS,
+      path: '/auth',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    req.user = decoded;
     next();
   } catch {
-    return error(res, 'Token inválido o expirado', 401);
+    clearTokenCookies(res);
+    return error(res, 'Sesión expirada. Iniciá sesión nuevamente.', 401);
   }
 }
 
 function optionalAuth(req, res, next) {
-  const header = req.headers['authorization'];
-  if (header && header.startsWith('Bearer ')) {
+  const accessToken = req.cookies?.access_token;
+  if (accessToken) {
     try {
-      req.user = jwt.verify(header.split(' ')[1], JWT_SECRET);
+      req.user = jwt.verify(accessToken, JWT_SECRET);
+      return next();
     } catch {
-      // ignore invalid token
+      // ignore
     }
   }
+
+  const refreshToken = req.cookies?.refresh_token;
+  if (refreshToken) {
+    try {
+      const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
+      const payload = { id: decoded.id, email: decoded.email, rol: decoded.rol };
+      const newAccessToken = generateAccessToken(payload);
+      res.cookie('access_token', newAccessToken, {
+        ...COOKIE_OPTIONS,
+        maxAge: 15 * 60 * 1000,
+      });
+      req.user = decoded;
+    } catch {
+      // ignore
+    }
+  }
+
   next();
 }
 
@@ -46,4 +122,12 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { generateToken, verifyToken, optionalAuth, requireRole, JWT_SECRET };
+module.exports = {
+  generateAccessToken,
+  generateRefreshToken,
+  setTokenCookies,
+  clearTokenCookies,
+  verifyToken,
+  optionalAuth,
+  requireRole,
+};

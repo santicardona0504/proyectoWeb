@@ -1,4 +1,4 @@
--- Up
+-- Up Migration
 CREATE TABLE IF NOT EXISTS usuarios (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(255) NOT NULL,
@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS usuarios (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Down
+-- Down Migration
 DROP TABLE IF EXISTS usuarios;

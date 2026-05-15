@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 import { BookService } from '../../services/book.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-add-book',
@@ -12,8 +14,6 @@ import { BookService } from '../../services/book.service';
     <div class="add-book-page">
       <h1 class="page-title">Agregar Nuevo Libro</h1>
       <p class="page-subtitle">Completa todos los campos obligatorios</p>
-
-      <div class="error-msg-general" *ngIf="errorMsg">{{ errorMsg }}</div>
 
       <form #bookForm="ngForm" (ngSubmit)="onSubmit(bookForm)" class="book-form" novalidate>
         <div class="form-group">
@@ -62,7 +62,7 @@ import { BookService } from '../../services/book.service';
               [(ngModel)]="model.isbn"
               #isbn="ngModel"
               required
-              pattern="^(?:\\d{9}[\\dXx]|\\d{13}|\\d-\\d{5}-\\d{3}-[\\dX])$"
+              pattern="^(?:\\d{9}[\\dXx]|\\d{13}|(?:\\d{1,7}-){3,4}[\\dX])$"
               placeholder="Ej: 978-84-376-0494-7"
               class="form-control"
               [class.invalid]="isbn.invalid && isbn.touched"
@@ -120,10 +120,6 @@ import { BookService } from '../../services/book.service';
           </button>
           <button type="button" class="btn btn-secondary" routerLink="/books">Cancelar</button>
         </div>
-
-        <div class="success-msg" *ngIf="success">
-          ¡Libro agregado exitosamente!
-        </div>
       </form>
     </div>
   `,
@@ -168,12 +164,8 @@ import { BookService } from '../../services/book.service';
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(67,97,238,.15);
     }
-    .form-control.invalid {
-      border-color: var(--danger);
-    }
-    .form-control.invalid:focus {
-      box-shadow: 0 0 0 3px rgba(220,53,69,.15);
-    }
+    .form-control.invalid { border-color: var(--danger); }
+    .form-control.invalid:focus { box-shadow: 0 0 0 3px rgba(220,53,69,.15); }
     select.form-control { cursor: pointer; }
     .error-msg {
       display: block;
@@ -187,27 +179,22 @@ import { BookService } from '../../services/book.service';
       margin-top: 2rem;
     }
     .btn[disabled] { opacity: .6; cursor: not-allowed; }
-    .error-msg-general { background: #f8d7da; color: #721c24; padding: .75rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-weight: 500; text-align: center; }
-    .success-msg {
-      margin-top: 1rem;
-      background: #d4edda;
-      color: #155724;
-      padding: .75rem 1rem;
-      border-radius: 8px;
-      font-weight: 500;
-      text-align: center;
-    }
     @media (max-width: 600px) {
       .form-row { grid-template-columns: 1fr; }
       .book-form { padding: 1.25rem; }
     }
-  `]
+  `],
 })
-export class AddBookComponent {
+export class AddBookComponent implements OnDestroy {
+  private destroy$ = new Subject<void>();
+  private bookService = inject(BookService);
+  private router = inject(Router);
+  private toast = inject(ToastService);
+
   categorias = [
     'Novela', 'Realismo mágico', 'Distopía', 'Literatura infantil',
     'Romance', 'Ciencia ficción', 'Fantasía', 'Terror', 'Poesía',
-    'Biografía', 'Historia', 'Filosofía'
+    'Biografía', 'Historia', 'Filosofía',
   ];
 
   model = {
@@ -215,24 +202,15 @@ export class AddBookComponent {
     autor: '',
     isbn: '',
     anio: null as number | null,
-    categoria: ''
+    categoria: '',
   };
 
   currentYear = new Date().getFullYear();
   submitting = false;
-  success = false;
-  errorMsg = '';
-
-  constructor(
-    private bookService: BookService,
-    private router: Router
-  ) {}
 
   onSubmit(form: NgForm) {
     if (form.invalid) return;
     this.submitting = true;
-    this.success = false;
-    this.errorMsg = '';
 
     this.bookService.addBook({
       titulo: this.model.titulo,
@@ -240,19 +218,26 @@ export class AddBookComponent {
       isbn: this.model.isbn,
       anio: this.model.anio!,
       categoria: this.model.categoria,
-      disponible: true
-    }).subscribe({
+      disponible: true,
+    })
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
       next: () => {
-        this.success = true;
         this.submitting = false;
+        this.toast.success('Libro agregado exitosamente');
         form.resetForm();
         this.model = { titulo: '', autor: '', isbn: '', anio: null, categoria: '' };
         setTimeout(() => this.router.navigate(['/books']), 1500);
       },
       error: (err) => {
         this.submitting = false;
-        this.errorMsg = err.error?.error || 'Error al guardar el libro';
-      }
+        this.toast.error(err.error?.error || 'Error al guardar el libro');
+      },
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

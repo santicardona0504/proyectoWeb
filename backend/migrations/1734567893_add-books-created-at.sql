@@ -1,0 +1,5 @@
+-- Up
+ALTER TABLE books ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+
+-- Down
+ALTER TABLE books DROP COLUMN IF EXISTS created_at;

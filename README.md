@@ -1,15 +1,21 @@
 # Sistema de Biblioteca
 
+[![CI](https://github.com/tu-usuario/sistema-biblioteca/actions/workflows/ci.yml/badge.svg)](https://github.com/tu-usuario/sistema-biblioteca/actions/workflows/ci.yml)
+
 Aplicación web full-stack para gestión de biblioteca con catálogo de libros, control de disponibilidad y préstamos.
 
 ## Stack Tecnológico
 
-| Capa      | Tecnología                                           |
-|-----------|------------------------------------------------------|
-| Backend   | Node.js             |
-| Frontend  | Angular 18     |
-| Base de datos | PostgreSQL 16                                    |
-| Contenedor | Docker Compose                                       |
+| Capa         | Tecnología                                  |
+| ------------ | ------------------------------------------- |
+| Backend      | Node.js + Express 5                         |
+| Frontend     | Angular 18 (standalone components, Signals) |
+| Base de datos| PostgreSQL 16                                |
+| Autenticación| JWT (HttpOnly cookies + refresh tokens)     |
+| Contenedor   | Docker Compose                              |
+| CI/CD        | GitHub Actions                              |
+| Logging      | Pino                                        |
+| Tests        | Jest + Supertest                            |
 
 ## Requisitos
 
@@ -43,16 +49,7 @@ docker compose up -d
 
 ### 3. Configurar variables de entorno
 
-Editar `backend/.env` si es necesario (valores por defecto):
-
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=library
-DB_USER=admin
-DB_PASSWORD=admin123
-PORT=3000
-```
+Editar `backend/.env` (valores por defecto listos para desarrollo).
 
 ### 4. Migraciones y datos iniciales
 
@@ -60,8 +57,6 @@ PORT=3000
 cd backend
 npm run db:setup
 ```
-
-Esto ejecuta las migraciones y luego inserta los libros de prueba.
 
 ### 5. Iniciar servidores
 
@@ -82,61 +77,58 @@ ng serve
 ### Scripts disponibles
 
 | Comando                  | Descripción                                  |
-|--------------------------|-----------------------------------------------|
-| `npm start`              | Inicia el servidor en `localhost:3000`        |
-| `npm run dev`            | Inicia con recarga automática (`--watch`)     |
-| `npm run migrate:up`     | Aplica migraciones pendientes                |
-| `npm run migrate:down`   | Revierte la última migración                  |
-| `npm run migrate:create` | Crea un nuevo archivo de migración            |
-| `npm run seed`           | Inserta datos de prueba en la base de datos   |
-| `npm run db:setup`       | Ejecuta migraciones + seed (setup completo)   |
+| ------------------------ | -------------------------------------------- |
+| `npm start`              | Inicia el servidor en `localhost:3000`       |
+| `npm run dev`            | Inicia con recarga automática                |
+| `npm test`               | Ejecuta tests de integración                 |
+| `npm run migrate:up`     | Aplica migraciones pendientes               |
+| `npm run migrate:down`   | Revierte la última migración                 |
+| `npm run migrate:create` | Crea un nuevo archivo de migración           |
+| `npm run seed`           | Inserta datos de prueba en la base de datos  |
+| `npm run db:setup`       | Ejecuta migraciones + seed (setup completo)  |
 
 ### API Endpoints
 
-| Método   | Ruta            | Descripción                        |
-|----------|-----------------|------------------------------------|
-| `GET`    | `/books`        | Obtener todos los libros           |
-| `GET`    | `/books/:id`    | Obtener un libro por ID            |
-| `POST`   | `/books`        | Agregar un nuevo libro             |
-| `PUT`    | `/books/:id`    | Actualizar un libro completo       |
-| `PATCH`  | `/books/:id`    | Actualizar parcialmente un libro   |
-| `DELETE` | `/books/:id`    | Eliminar un libro                  |
+| Método   | Ruta                     | Auth     | Descripción                          |
+| -------- | ------------------------ | -------- | ------------------------------------ |
+| `POST`   | `/auth/register`         | Pública  | Registrar nuevo usuario              |
+| `POST`   | `/auth/login`            | Pública  | Iniciar sesión                       |
+| `POST`   | `/auth/refresh`          | Pública  | Refrescar tokens (cookie)            |
+| `GET`    | `/auth/me`               | Requerida| Obtener usuario actual               |
+| `POST`   | `/auth/logout`           | Pública  | Cerrar sesión                        |
+| `GET`    | `/health`                | Pública  | Health check                         |
+| `GET`    | `/books`                 | Pública  | Listar libros (paginado, búsqueda)   |
+| `GET`    | `/books/stats`           | Pública  | Estadísticas (total, disponibles, prestados) |
+| `GET`    | `/books/:id`             | Pública  | Obtener libro por ID                 |
+| `POST`   | `/books`                 | Admin    | Crear libro                          |
+| `PUT`    | `/books/:id`             | Admin    | Actualizar libro completo            |
+| `PATCH`  | `/books/:id`             | Admin    | Actualizar libro parcialmente        |
+| `DELETE` | `/books/:id`             | Admin    | Eliminar libro                       |
+| `GET`    | `/loans`                 | Requerida| Listar préstamos (paginado)          |
+| `GET`    | `/loans/active`          | Requerida| Préstamos activos (paginado)         |
+| `GET`    | `/loans/user`            | Requerida| Préstamos por usuario                |
+| `POST`   | `/loans`                 | Pública  | Crear préstamo                       |
+| `POST`   | `/loans/return`          | Requerida| Devolver libro                       |
+| `GET`    | `/users`                 | Admin    | Listar usuarios                      |
+| `GET`    | `/users/:id`             | Admin    | Obtener usuario                      |
+| `PATCH`  | `/users/:id/role`        | Admin    | Cambiar rol                          |
+| `PATCH`  | `/users/:id/reset-password`| Admin  | Resetear contraseña                  |
+| `DELETE` | `/users/:id`             | Admin    | Eliminar usuario                     |
 
-#### Ejemplos de uso
+### Formato de respuestas
 
-```bash
-# Obtener todos los libros
-curl http://localhost:3000/books
-
-# Agregar un libro
-curl -X POST http://localhost:3000/books \
-  -H "Content-Type: application/json" \
-  -d '{"titulo":"El hobbit","autor":"J.R.R. Tolkien","categoria":"Fantasía","isbn":"978-84-450-1234-5","anio":1937}'
-
-# Cambiar disponibilidad
-curl -X PATCH http://localhost:3000/books/1 \
-  -H "Content-Type: application/json" \
-  -d '{"disponible":false}'
+```json
+{ "success": true, "data": { ... } }
+{ "success": false, "error": "mensaje" }
 ```
 
-#### Formato de respuestas
+### Autenticación
 
-Todas las respuestas son JSON con la siguiente estructura:
+El sistema usa **JWT con HttpOnly cookies** (no localStorage):
 
-- Éxito: `{ "success": true, "data": { ... } }`
-- Error: `{ "success": false, "error": "mensaje" }`
-
-### Modelo de datos (tabla `books`)
-
-| Campo        | Tipo           | Descripción                     |
-|--------------|----------------|---------------------------------|
-| `id`         | SERIAL (PK)    | Identificador único             |
-| `titulo`     | VARCHAR(255)   | Título del libro (obligatorio)  |
-| `autor`      | VARCHAR(255)   | Autor (obligatorio)             |
-| `categoria`  | VARCHAR(100)   | Género/Categoría (obligatorio)  |
-| `isbn`       | VARCHAR(20)    | Código ISBN                     |
-| `anio`       | INTEGER        | Año de publicación              |
-| `disponible` | BOOLEAN        | Disponibilidad (default: true)  |
+- `access_token`: 15 minutos de vida
+- `refresh_token`: 7 días de vida, renovación automática vía middleware
+- Las cookies tienen flags `HttpOnly`, `Secure` (en producción) y `SameSite=Lax`
 
 ---
 
@@ -144,35 +136,38 @@ Todas las respuestas son JSON con la siguiente estructura:
 
 ### Rutas
 
-| Ruta           | Página                              |
-|----------------|-------------------------------------|
-| `/`            | Dashboard con estadísticas          |
-| `/books`       | Catálogo de libros con búsqueda     |
-| `/books/add`   | Formulario para agregar libro       |
+| Ruta           | Página                              | Acceso              |
+| -------------- | ----------------------------------- | ------------------- |
+| `/`            | Dashboard con estadísticas          | Autenticado         |
+| `/books`       | Catálogo de libros con búsqueda     | Autenticado         |
+| `/books/add`   | Formulario para agregar libro       | Admin               |
+| `/loans`       | Gestión de préstamos                | Admin/Bibliotecario |
+| `/login`       | Inicio de sesión / registro         | Público             |
 
 ### Funcionalidades
 
-- Dashboard con estadísticas (total libros, disponibles, prestados)
-- Catálogo con tabla de libros y búsqueda por título, autor o género
-- Agregar libro con formulario validado (incluye validación de ISBN)
-- Botón Prestar/Devolver para cambiar disponibilidad
+- Dashboard con estadísticas (total, disponibles, prestados)
+- Catálogo con tabla de libros, búsqueda y paginación
+- Agregar libro con formulario validado (ISBN, año, etc.)
+- Sistema de préstamos (prestar/devolver con registro)
+- Gestión de préstamos activos e historial
+- Roles: admin, bibliotecario, usuario
+- Notificaciones toast para feedback de acciones
+- Manejo global de errores HTTP (401 → refresh → login)
+- Confirmación en acciones destructivas
+
 ---
 
 ## Tests
 
-Los tests se implementarán en un futuro.
-
----
-
-## Detener servicios
-
 ```bash
-# Detener PostgreSQL (mantiene datos)
-docker compose down
-
-# Detener PostgreSQL y borrar datos
-docker compose down -v
+cd backend
+npm test
 ```
+
+Los tests de integración requieren una base de datos PostgreSQL configurada via variables de entorno. Por defecto usa `library_test`.
+
+En CI (GitHub Actions), la base de datos se provisiona automáticamente como service container.
 
 ---
 
@@ -180,41 +175,28 @@ docker compose down -v
 
 ```
 sistemaBiblioteca/
+├── .github/workflows/ci.yml
 ├── backend/
 │   ├── src/
-│   │   ├── config/db.js               # Pool de conexión a PostgreSQL
-│   │   ├── controllers/booksController.js  # Lógica CRUD
-│   │   ├── routes/router.js           # Enrutamiento manual
-│   │   ├── middleware/cors.js         # Cabeceras CORS
-│   │   ├── utils/jsonResponse.js     # Helpers de respuesta JSON
-│   │   └── server.js                  # Entry point HTTP
-│   ├── migrations/                    # Migraciones SQL (node-pg-migrate)
-│   ├── seeds/                         # Datos de prueba
-│   ├── scripts/run-seed.js            # Ejecutor de seeds
-│   ├── docker-compose.yml             # PostgreSQL en Docker
-│   ├── pgmconfig.js                   # Config de migraciones
-│   ├── .env                           # Variables de entorno
+│   │   ├── config/db.js
+│   │   ├── controllers/
+│   │   ├── middleware/auth.js
+│   │   ├── routes/router.js
+│   │   ├── utils/
+│   │   └── server.js
+│   ├── migrations/
+│   ├── seeds/
+│   ├── __tests__/
+│   ├── scripts/
+│   ├── docker-compose.yml
 │   └── package.json
 ├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── models/book.model.ts   # Interfaz Book
-│   │   │   ├── services/book.service.ts  # Servicio HTTP
-│   │   │   ├── pages/
-│   │   │   │   ├── dashboard/         # Panel de estadísticas
-│   │   │   │   ├── book-list/         # Catálogo con tabla
-│   │   │   │   └── add-book/          # Formulario de alta
-│   │   │   ├── components/
-│   │   │   │   ├── book-card/         # Tarjeta de libro
-│   │   │   │   └── navbar/            # Barra de navegación
-│   │   │   ├── app.component.ts
-│   │   │   ├── app.config.ts
-│   │   │   └── app.routes.ts
-│   │   ├── index.html
-│   │   ├── main.ts
-│   │   └── styles.css
-│   ├── angular.json
-│   ├── tsconfig.json
+│   ├── src/app/
+│   │   ├── components/
+│   │   ├── guards/
+│   │   ├── models/
+│   │   ├── pages/
+│   │   └── services/
 │   └── package.json
 └── README.md
 ```

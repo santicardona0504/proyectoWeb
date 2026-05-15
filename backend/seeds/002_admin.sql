@@ -1,0 +1,2 @@
+-- Admin user is created via run-seed.js script with runtime-generated password hash
+-- This file is intentionally kept minimal; password hash is generated dynamically

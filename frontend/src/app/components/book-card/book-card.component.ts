@@ -16,7 +16,7 @@ import { Book } from '../../models/book.model';
           <span class="meta-tag">{{ book.categoria }}</span>
           <span class="meta-year">{{ book.anio }}</span>
         </div>
-        <p class="card-isbn">ISBN: {{ book.isbn }}</p>
+        <p class="card-isbn" *ngIf="book.isbn">ISBN: {{ book.isbn }}</p>
         <span class="card-status" [class.available]="book.disponible" [class.borrowed]="!book.disponible">
           {{ book.disponible ? 'Disponible' : 'Prestado' }}
         </span>
@@ -96,7 +96,7 @@ import { Book } from '../../models/book.model';
     }
     .card-status.available { background: #d4edda; color: #155724; }
     .card-status.borrowed { background: #f8d7da; color: #721c24; }
-  `]
+  `],
 })
 export class BookCardComponent {
   @Input() book!: Book;

@@ -7,7 +7,7 @@ const MAX_STR_LENGTH = 255;
 
 function validateISBN(isbn) {
   if (!isbn) return true;
-  return /^(?:\d{9}[\dXx]|\d{13}|\d-\d{5}-\d{3}-[\dX])$/.test(isbn);
+  return /^(?:\d{9}[\dXx]|\d{13}|(?:\d{1,7}-){3,4}[\dX])$/.test(isbn);
 }
 
 function validateBookInput(body, requireAll) {
@@ -46,7 +46,7 @@ function validateBookInput(body, requireAll) {
     }
   }
 
-  if (anio !== undefined && anio !== null) {
+  if (anio !== undefined && anio !== null && anio !== '') {
     const anioNum = parseInt(anio, 10);
     if (isNaN(anioNum) || anioNum < 1000 || anioNum > new Date().getFullYear()) {
       errors.push(`anio debe ser un número entre 1000 y ${new Date().getFullYear()}`);
@@ -65,33 +65,33 @@ async function getAll(req, res) {
 
     if (search) {
       const countResult = await pool.query(
-        `SELECT COUNT(*) FROM books WHERE titulo ILIKE $1 OR autor ILIKE $1 OR categoria ILIKE $1`,
+        'SELECT COUNT(*) FROM books WHERE titulo ILIKE $1 OR autor ILIKE $1 OR categoria ILIKE $1',
         [`%${search}%`]
       );
       const total = parseInt(countResult.rows[0].count, 10);
       const result = await pool.query(
-        `SELECT * FROM books WHERE titulo ILIKE $1 OR autor ILIKE $1 OR categoria ILIKE $1 ORDER BY id LIMIT $2 OFFSET $3`,
+        'SELECT * FROM books WHERE titulo ILIKE $1 OR autor ILIKE $1 OR categoria ILIKE $1 ORDER BY id DESC LIMIT $2 OFFSET $3',
         [`%${search}%`, limit, offset]
       );
       success(res, {
         books: result.rows,
-        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
       });
     } else {
       const countResult = await pool.query('SELECT COUNT(*) FROM books');
       const total = parseInt(countResult.rows[0].count, 10);
       const result = await pool.query(
-        'SELECT * FROM books ORDER BY id LIMIT $1 OFFSET $2',
+        'SELECT * FROM books ORDER BY id DESC LIMIT $1 OFFSET $2',
         [limit, offset]
       );
       success(res, {
         books: result.rows,
-        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+        pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
       });
     }
   } catch (err) {
-    logger.error('Error en getAll:', err.message);
-    error(res, 'Error al obtener los libros de la base de datos', 500);
+    logger.error({ err }, 'Error en getAll');
+    error(res, 'Error al obtener los libros', 500);
   }
 }
 
@@ -105,20 +105,21 @@ async function getStats(req, res) {
     );
     success(res, result.rows[0]);
   } catch (err) {
-    logger.error('Error en getStats:', err.message);
+    logger.error({ err }, 'Error en getStats');
     error(res, 'Error al obtener estadísticas', 500);
   }
 }
 
-async function getById(req, res, id) {
+async function getById(req, res) {
   try {
+    const { id } = req.params;
     const result = await pool.query('SELECT * FROM books WHERE id = $1', [id]);
     if (result.rows.length === 0) {
       return error(res, `Libro con id ${id} no encontrado`, 404);
     }
     success(res, result.rows[0]);
   } catch (err) {
-    logger.error('Error en getById:', err.message);
+    logger.error({ err }, 'Error en getById');
     error(res, 'Error al obtener el libro', 500);
   }
 }
@@ -141,13 +142,17 @@ async function create(req, res) {
 
     success(res, result.rows[0], 201);
   } catch (err) {
-    logger.error('Error en create:', err.message);
+    if (err.code === '23505') {
+      return error(res, 'El ISBN ya existe en la base de datos', 409);
+    }
+    logger.error({ err }, 'Error en create');
     error(res, 'Error al crear el libro', 500);
   }
 }
 
-async function update(req, res, id) {
+async function update(req, res) {
   try {
+    const { id } = req.params;
     const { titulo, autor, categoria, isbn, anio, disponible } = req.body;
     const errors = validateBookInput(req.body, true);
 
@@ -169,13 +174,17 @@ async function update(req, res, id) {
 
     success(res, result.rows[0]);
   } catch (err) {
-    logger.error('Error en update:', err.message);
+    if (err.code === '23505') {
+      return error(res, 'El ISBN ya existe en la base de datos', 409);
+    }
+    logger.error({ err }, 'Error en update');
     error(res, 'Error al actualizar el libro', 500);
   }
 }
 
-async function patch(req, res, id) {
+async function patch(req, res) {
   try {
+    const { id } = req.params;
     const errors = validateBookInput(req.body, false);
     if (errors.length > 0) {
       return error(res, `Datos inválidos: ${errors.join('. ')}`, 400);
@@ -210,20 +219,21 @@ async function patch(req, res, id) {
 
     success(res, result.rows[0]);
   } catch (err) {
-    logger.error('Error en patch:', err.message);
+    logger.error({ err }, 'Error en patch');
     error(res, 'Error al actualizar el libro', 500);
   }
 }
 
-async function remove(req, res, id) {
+async function remove(req, res) {
   try {
+    const { id } = req.params;
     const result = await pool.query('DELETE FROM books WHERE id = $1 RETURNING *', [id]);
     if (result.rows.length === 0) {
       return error(res, `Libro con id ${id} no encontrado`, 404);
     }
     success(res, { mensaje: `Libro "${result.rows[0].titulo}" eliminado correctamente` });
   } catch (err) {
-    logger.error('Error en remove:', err.message);
+    logger.error({ err }, 'Error en remove');
     error(res, 'Error al eliminar el libro', 500);
   }
 }

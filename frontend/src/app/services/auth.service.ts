@@ -10,11 +10,6 @@ export interface User {
   rol: string;
 }
 
-export interface AuthResponse {
-  user: User;
-  token: string;
-}
-
 interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -23,65 +18,52 @@ interface ApiResponse<T> {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`;
-  private tokenKey = 'biblioteca_token';
-  private userKey = 'biblioteca_user';
-
   private userSignal = signal<User | null>(null);
+  private loaded = false;
+
   isLoggedIn = computed(() => this.userSignal() !== null);
   currentUser = computed(() => this.userSignal());
   isAdmin = computed(() => this.userSignal()?.rol === 'admin');
 
-  constructor(private http: HttpClient) {
-    this.loadStoredUser();
+  constructor(private http: HttpClient) {}
+
+  init() {
+    if (this.loaded) return;
+    this.loaded = true;
+    this.http.get<ApiResponse<{ user: User }>>(`${this.apiUrl}/me`, { withCredentials: true })
+      .pipe(map(res => res.data.user))
+      .subscribe({
+        next: (user) => this.userSignal.set(user),
+        error: () => this.userSignal.set(null),
+      });
   }
 
-  private loadStoredUser() {
-    const token = localStorage.getItem(this.tokenKey);
-    const userStr = localStorage.getItem(this.userKey);
-    if (token && userStr) {
-      try {
-        this.userSignal.set(JSON.parse(userStr));
-      } catch {
-        this.clearStorage();
-      }
-    }
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
-  }
-
-  login(email: string, password: string): Observable<AuthResponse> {
-    return this.http.post<ApiResponse<AuthResponse>>(
-      `${this.apiUrl}/login`, { email, password }
+  login(email: string, password: string): Observable<User> {
+    return this.http.post<ApiResponse<{ user: User }>>(
+      `${this.apiUrl}/login`, { email, password }, { withCredentials: true }
     ).pipe(
-      map(res => res.data),
-      tap(data => this.handleAuth(data))
+      map(res => res.data.user),
+      tap(user => this.userSignal.set(user)),
     );
   }
 
-  register(nombre: string, email: string, password: string): Observable<AuthResponse> {
-    return this.http.post<ApiResponse<AuthResponse>>(
-      `${this.apiUrl}/register`, { nombre, email, password }
+  register(nombre: string, email: string, password: string): Observable<User> {
+    return this.http.post<ApiResponse<{ user: User }>>(
+      `${this.apiUrl}/register`, { nombre, email, password }, { withCredentials: true }
     ).pipe(
-      map(res => res.data),
-      tap(data => this.handleAuth(data))
+      map(res => res.data.user),
+      tap(user => this.userSignal.set(user)),
     );
-  }
-
-  private handleAuth(data: AuthResponse) {
-    localStorage.setItem(this.tokenKey, data.token);
-    localStorage.setItem(this.userKey, JSON.stringify(data.user));
-    this.userSignal.set(data.user);
   }
 
   logout() {
-    this.clearStorage();
+    this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
+      .subscribe({ error: () => {} });
     this.userSignal.set(null);
   }
 
-  private clearStorage() {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
+  refreshSession(): Observable<void> {
+    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
+      .pipe(map(() => undefined));
   }
 }
