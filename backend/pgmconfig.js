@@ -11,6 +11,5 @@ const {
 const databaseUrl = `postgres://${encodeURIComponent(DB_USER)}:${encodeURIComponent(DB_PASSWORD)}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
 
 module.exports = {
-  databaseUrl,
-  migrationsDirectory: 'migrations',
+  url: databaseUrl,
 };
