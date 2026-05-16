@@ -349,8 +349,27 @@ El sistema usa **JWT con HttpOnly cookies** (no localStorage):
 - Notificaciones toast para feedback de acciones
 - Manejo global de errores HTTP (401 → refresh → login)
 - Confirmación en acciones destructivas
+- Validaciones visuales en formularios
+- Diseño responsive para dispositivos móviles
+- Feedback visual en errores de conexión
+- Mejoras de experiencia de usuario en navegación
+
+### Validaciones implementadas
+
+- Validación de campos obligatorios
+- Validación de stock y valores negativos
+- Validación de formularios antes de enviar peticiones
+- Mensajes de error amigables para el usuario
 
 ---
+
+### Mejoras de interfaz
+
+- Optimización de estilos globales
+- Adaptación responsive para móviles y tablets
+- Mejoras visuales en tablas y formularios
+- Estandarización de botones y componentes visuales
+- Manejo visual de errores y estados de carga
 
 ## Tests
 
@@ -361,9 +380,21 @@ npm test
 
 Los tests de integración requieren una base de datos PostgreSQL configurada via variables de entorno. Por defecto usa `library_test`.
 
+También se incluyen validaciones básicas de formularios y flujos principales del sistema.
+
 En CI (GitHub Actions), la base de datos se provisiona automáticamente como service container.
 
 ---
+
+## Responsive Design
+
+La interfaz fue optimizada para:
+
+- Escritorio
+- Tablets
+- Dispositivos móviles
+
+Incluyendo mejoras en tablas, formularios y distribución de componentes.
 
 ## Estructura del proyecto
 
