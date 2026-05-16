@@ -145,7 +145,6 @@ import { ToastService } from '../../services/toast.service';
       margin-top: .35rem;
     }
     .btn-block { width: 100%; padding: .75rem; font-size: 1rem; }
-    .btn[disabled] { opacity: .6; cursor: not-allowed; }
     .auth-footer {
       text-align: center;
       margin-top: 1.5rem;

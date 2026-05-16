@@ -138,38 +138,7 @@ import { Book } from '../../models/book.model';
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(67,97,238,.15);
     }
-    .loading { text-align: center; padding: 3rem; color: var(--text-light); }
-    .table-container {
-      background: var(--card-bg);
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-      overflow-x: auto;
-    }
-    .books-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 650px;
-    }
-    .books-table th {
-      text-align: left;
-      padding: 1rem 1.25rem;
-      font-size: .8rem;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--text-light);
-      border-bottom: 2px solid var(--border);
-      background: var(--bg);
-    }
-    .books-table td {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--border);
-      color: var(--text);
-      font-size: .9rem;
-    }
-    .books-table tr:last-child td { border-bottom: none; }
-    .books-table tr:hover td { background: rgba(67,97,238,.03); }
-    .cell-title { font-weight: 600; }
+    .books-table { width: 100%; border-collapse: collapse; min-width: 650px; }
     .cell-isbn { font-family: monospace; font-size: .82rem; color: var(--text-light); }
     .genre-tag {
       background: var(--primary-light);
@@ -179,26 +148,8 @@ import { Book } from '../../models/book.model';
       font-size: .8rem;
       font-weight: 500;
     }
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: .8rem;
-      font-weight: 600;
-    }
     .status-badge.available { background: #d4edda; color: #155724; }
     .status-badge.borrowed { background: #f8d7da; color: #721c24; }
-    .empty-msg { text-align: center; color: var(--text-light); padding: 3rem !important; }
-    .btn-sm { padding: .4rem .9rem; font-size: .82rem; }
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1rem;
-      padding: 1rem;
-      border-top: 1px solid var(--border);
-    }
-    .page-info { font-size: .9rem; color: var(--text-light); }
     .btn-search { margin-top: .5rem; }
     .search-bar { display: flex; gap: .5rem; align-items: flex-start; flex-wrap: wrap; }
     .modal-overlay {
@@ -234,7 +185,6 @@ import { Book } from '../../models/book.model';
     }
     .form-control:focus { outline: none; border-color: var(--primary); }
     .modal-actions { display: flex; gap: .75rem; margin-top: 1.5rem; }
-    .btn[disabled] { opacity: .6; cursor: not-allowed; }
   `],
 })
 export class BookListComponent implements OnInit, OnDestroy {

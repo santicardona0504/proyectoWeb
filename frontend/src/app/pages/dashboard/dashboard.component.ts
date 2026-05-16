@@ -81,7 +81,6 @@ import { RouterLink } from '@angular/router';
     .stat-card.total .stat-number { color: var(--primary); }
     .stat-card.available .stat-number { color: #28a745; }
     .stat-card.borrowed .stat-number { color: #dc3545; }
-    .loading { text-align: center; padding: 3rem; color: var(--text-light); }
     .recent-section h2 { font-size: 1.3rem; margin-bottom: 1rem; color: var(--text); }
     .cards-grid {
       display: grid;

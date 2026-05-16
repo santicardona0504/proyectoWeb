@@ -17,6 +17,13 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'users',
+    loadComponent: () =>
+      import('./pages/users/users.component').then(m => m.UsersComponent),
+    title: 'Usuarios - Biblioteca',
+    canActivate: [roleGuard(['admin'])],
+  },
+  {
     path: 'books/add',
     loadComponent: () =>
       import('./pages/add-book/add-book.component').then(m => m.AddBookComponent),

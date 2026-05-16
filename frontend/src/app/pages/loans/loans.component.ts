@@ -97,59 +97,9 @@ import { Loan } from '../../models/loan.model';
     }
     .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
     .tab:hover { color: var(--primary); }
-    .loading { text-align: center; padding: 3rem; color: var(--text-light); }
-    .table-container {
-      background: var(--card-bg);
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-      overflow-x: auto;
-    }
-    .loans-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 700px;
-    }
-    .loans-table th {
-      text-align: left;
-      padding: 1rem 1.25rem;
-      font-size: .8rem;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--text-light);
-      border-bottom: 2px solid var(--border);
-      background: var(--bg);
-    }
-    .loans-table td {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--border);
-      color: var(--text);
-      font-size: .9rem;
-    }
-    .loans-table tr:last-child td { border-bottom: none; }
-    .loans-table tr:hover td { background: rgba(67,97,238,.03); }
-    .cell-title { font-weight: 600; }
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: .8rem;
-      font-weight: 600;
-    }
+    .loans-table { width: 100%; border-collapse: collapse; min-width: 700px; }
     .status-badge.active { background: #fff3cd; color: #856404; }
     .status-badge.returned { background: #d4edda; color: #155724; }
-    .empty-msg { text-align: center; color: var(--text-light); padding: 3rem !important; }
-    .btn-sm { padding: .4rem .9rem; font-size: .82rem; }
-    .btn[disabled] { opacity: .6; cursor: not-allowed; }
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1rem;
-      padding: 1rem;
-      border-top: 1px solid var(--border);
-    }
-    .page-info { font-size: .9rem; color: var(--text-light); }
   `],
 })
 export class LoansComponent implements OnInit, OnDestroy {

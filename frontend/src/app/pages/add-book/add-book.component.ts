@@ -178,7 +178,6 @@ import { ToastService } from '../../services/toast.service';
       gap: .75rem;
       margin-top: 2rem;
     }
-    .btn[disabled] { opacity: .6; cursor: not-allowed; }
     @media (max-width: 600px) {
       .form-row { grid-template-columns: 1fr; }
       .book-form { padding: 1.25rem; }

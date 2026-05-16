@@ -40,6 +40,10 @@ async function updateRole(req, res) {
       return error(res, 'Rol inválido. Debe ser: admin, bibliotecario o usuario', 400);
     }
 
+    if (req.user.id === parseInt(id, 10) && rol !== 'admin') {
+      return error(res, 'No puedes cambiarte el rol a ti mismo', 400);
+    }
+
     const result = await pool.query(
       'UPDATE usuarios SET rol = $1 WHERE id = $2 RETURNING id, nombre, email, rol, created_at',
       [rol, id]

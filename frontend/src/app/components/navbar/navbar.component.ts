@@ -21,6 +21,7 @@ import { AuthService } from '../../services/auth.service';
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeMenu()">Inicio</a>
           <a routerLink="/books" routerLinkActive="active" (click)="closeMenu()">Libros</a>
           <a routerLink="/loans" routerLinkActive="active" (click)="closeMenu()" *ngIf="auth.isAdmin() || auth.currentUser()?.rol === 'bibliotecario'">Préstamos</a>
+          <a routerLink="/users" routerLinkActive="active" (click)="closeMenu()" *ngIf="auth.isAdmin()">Usuarios</a>
           <a routerLink="/books/add" routerLinkActive="active" (click)="closeMenu()" *ngIf="auth.isAdmin()">Agregar Libro</a>
         </div>
         <div class="nav-actions" [class.open]="menuOpen">
