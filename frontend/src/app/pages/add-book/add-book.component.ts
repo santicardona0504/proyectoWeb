@@ -207,8 +207,26 @@ export class AddBookComponent implements OnDestroy {
   currentYear = new Date().getFullYear();
   submitting = false;
 
+  
+
   onSubmit(form: NgForm) {
     if (form.invalid) return;
+
+    if (this.model.anio && this.model.anio < 0) {
+  this.toast.error('El año no puede ser negativo');
+  return;
+}
+
+if (this.model.isbn && this.model.isbn.length < 10) {
+  this.toast.error('El ISBN debe tener al menos 10 caracteres');
+  return;
+}
+
+if (!this.model.titulo.trim() || !this.model.autor.trim()) {
+  this.toast.error('Título y autor son obligatorios');
+  return;
+}
+
     this.submitting = true;
 
     this.bookService.addBook({
