@@ -1,3 +1,197 @@
+📚 Sistema de Biblioteca
+
+Aplicación web Full-Stack para la gestión de bibliotecas 📖, permitiendo:
+
+✅ Gestión de libros
+✅ Control de disponibilidad
+✅ Sistema de préstamos
+✅ Roles de usuarios
+✅ Autenticación segura con JWT
+
+🚀 Tecnologías utilizadas
+🔧 Capa	💻 Tecnología
+Backend	Node.js + Express 5
+Frontend	Angular 18
+Base de datos	PostgreSQL 16
+Autenticación	JWT + HttpOnly Cookies
+Contenedores	Docker Compose
+CI/CD	GitHub Actions
+Logging	Pino
+Testing	Jest + Supertest
+📋 Requisitos antes de empezar
+
+Asegúrate de tener instalado:
+
+✅ Docker
+✅ Docker Compose
+✅ Node.js 18+
+✅ npm
+✅ Angular CLI
+
+Instalar Angular CLI:
+
+npm install -g @angular/cli
+⚡ Instalación paso a paso
+🥇 PASO 1 — Clonar el proyecto
+git clone https://github.com/tu-usuario/sistema-biblioteca.git
+
+Entrar al proyecto:
+
+cd sistema-biblioteca
+🥈 PASO 2 — Instalar dependencias
+📦 Backend
+cd backend
+npm install
+🎨 Frontend
+cd ../frontend
+npm install
+🥉 PASO 3 — Levantar PostgreSQL con Docker
+
+Ir nuevamente al backend:
+
+cd ../backend
+
+Ejecutar:
+
+docker compose up -d
+
+✅ Esto iniciará PostgreSQL automáticamente.
+
+🛠️ PASO 4 — Configurar variables de entorno
+
+Editar el archivo:
+
+backend/.env
+
+📌 Los valores por defecto ya funcionan para desarrollo.
+
+🗄️ PASO 5 — Ejecutar migraciones y datos iniciales
+npm run db:setup
+
+✅ Este comando:
+
+Ejecuta migraciones
+Crea tablas
+Inserta datos iniciales
+▶️ PASO 6 — Iniciar el Backend
+npm start
+
+🌐 Backend disponible en:
+
+http://localhost:3000
+🎨 PASO 7 — Iniciar el Frontend
+
+Abrir otra terminal:
+
+cd frontend
+ng serve
+
+🌐 Frontend disponible en:
+
+http://localhost:4200
+🔐 Sistema de autenticación
+
+El proyecto utiliza:
+
+✅ JWT
+✅ Cookies HttpOnly
+✅ Refresh Tokens
+✅ Seguridad contra XSS
+
+⏳ Tiempo de vida de tokens
+Token	Duración
+access_token	15 minutos
+refresh_token	7 días
+📚 Endpoints principales de la API
+🔑 Autenticación
+Método	Endpoint	Descripción
+POST	/auth/register	Registrar usuario
+POST	/auth/login	Iniciar sesión
+POST	/auth/logout	Cerrar sesión
+GET	/auth/me	Obtener usuario actual
+📖 Libros
+Método	Endpoint	Descripción
+GET	/books	Obtener libros
+GET	/books/:id	Obtener libro por ID
+POST	/books	Crear libro
+PUT	/books/:id	Actualizar libro
+DELETE	/books/:id	Eliminar libro
+📦 Préstamos
+Método	Endpoint	Descripción
+GET	/loans	Listar préstamos
+POST	/loans	Crear préstamo
+POST	/loans/return	Devolver libro
+🎨 Funcionalidades del Frontend
+
+✅ Dashboard con estadísticas
+✅ Catálogo de libros
+✅ Búsqueda y paginación
+✅ Gestión de préstamos
+✅ Roles de usuario
+✅ Formularios validados
+✅ Notificaciones toast
+✅ Manejo global de errores
+✅ Confirmaciones de eliminación
+
+👥 Roles del sistema
+Rol	Permisos
+Admin	Control total
+Bibliotecario	Gestión de préstamos
+Usuario	Consultar libros
+🧪 Ejecutar tests
+
+Ir al backend:
+
+cd backend
+
+Ejecutar:
+
+npm test
+
+✅ Los tests usan PostgreSQL automáticamente.
+
+📂 Estructura del proyecto
+sistemaBiblioteca/
+├── .github/workflows/ci.yml
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── middleware/
+│   │   ├── routes/
+│   │   ├── utils/
+│   │   └── server.js
+│   ├── migrations/
+│   ├── seeds/
+│   ├── __tests__/
+│   ├── scripts/
+│   ├── docker-compose.yml
+│   └── package.json
+│
+├── frontend/
+│   ├── src/app/
+│   │   ├── components/
+│   │   ├── guards/
+│   │   ├── models/
+│   │   ├── pages/
+│   │   └── services/
+│   └── package.json
+│
+└── README.md
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Sistema de Biblioteca
 
 [![CI](https://github.com/tu-usuario/sistema-biblioteca/actions/workflows/ci.yml/badge.svg)](https://github.com/tu-usuario/sistema-biblioteca/actions/workflows/ci.yml)
