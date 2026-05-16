@@ -11,6 +11,9 @@ jobs:
     name: Backend
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: postgres://admin:admin123@localhost:5432/library_test
+
     services:
       postgres:
         image: postgres:16
