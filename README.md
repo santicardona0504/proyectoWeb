@@ -1,15 +1,16 @@
-📚 Sistema de Biblioteca
+# Sistema de Biblioteca
 
-Aplicación web Full-Stack para la gestión de bibliotecas 📖, permitiendo:
+[![CI](https://github.com/tu-usuario/sistema-biblioteca/actions/workflows/ci.yml/badge.svg)](https://github.com/tu-usuario/sistema-biblioteca/actions/workflows/ci.yml)
 
-✅ Gestión de libros
-✅ Control de disponibilidad
-✅ Sistema de préstamos
-✅ Roles de usuarios
-✅ Autenticación segura con JWT
+Aplicación web full-stack para la gestión de bibliotecas, permitiendo:
 
-🚀 Tecnologías utilizadas
-🔧 Capa	💻 Tecnología
+Gestión de libros
+Control de disponibilidad
+Sistema de préstamos
+Roles de usuarios
+Autenticación segura con JWT
+Tecnologías utilizadas
+Capa	Tecnología
 Backend	Node.js + Express 5
 Frontend	Angular 18
 Base de datos	PostgreSQL 16
@@ -18,248 +19,56 @@ Contenedores	Docker Compose
 CI/CD	GitHub Actions
 Logging	Pino
 Testing	Jest + Supertest
-📋 Requisitos antes de empezar
-
-Asegúrate de tener instalado:
-
-✅ Docker
-✅ Docker Compose
-✅ Node.js 18+
-✅ npm
-✅ Angular CLI
+Requisitos
+Docker
+Docker Compose
+Node.js 18+
+npm
+Angular CLI
 
 Instalar Angular CLI:
 
 npm install -g @angular/cli
-⚡ Instalación paso a paso
-🥇 PASO 1 — Clonar el proyecto
+Instalación
+1. Clonar el proyecto
 git clone https://github.com/tu-usuario/sistema-biblioteca.git
-
-Entrar al proyecto:
-
 cd sistema-biblioteca
-🥈 PASO 2 — Instalar dependencias
-📦 Backend
+2. Instalar dependencias
+Backend
 cd backend
 npm install
-🎨 Frontend
+Frontend
 cd ../frontend
 npm install
-🥉 PASO 3 — Levantar PostgreSQL con Docker
-
-Ir nuevamente al backend:
-
+Configuración
+3. Levantar PostgreSQL
 cd ../backend
-
-Ejecutar:
-
 docker compose up -d
+4. Variables de entorno
 
-✅ Esto iniciará PostgreSQL automáticamente.
-
-🛠️ PASO 4 — Configurar variables de entorno
-
-Editar el archivo:
+Editar:
 
 backend/.env
 
-📌 Los valores por defecto ya funcionan para desarrollo.
+Los valores por defecto funcionan para desarrollo.
 
-🗄️ PASO 5 — Ejecutar migraciones y datos iniciales
+5. Migraciones y datos iniciales
 npm run db:setup
 
-✅ Este comando:
+Este comando:
 
 Ejecuta migraciones
 Crea tablas
 Inserta datos iniciales
-▶️ PASO 6 — Iniciar el Backend
+Ejecución
+Backend
+cd backend
 npm start
 
-🌐 Backend disponible en:
+Disponible en:
 
 http://localhost:3000
-🎨 PASO 7 — Iniciar el Frontend
-
-Abrir otra terminal:
-
-cd frontend
-ng serve
-
-🌐 Frontend disponible en:
-
-http://localhost:4200
-🔐 Sistema de autenticación
-
-El proyecto utiliza:
-
-✅ JWT
-✅ Cookies HttpOnly
-✅ Refresh Tokens
-✅ Seguridad contra XSS
-
-⏳ Tiempo de vida de tokens
-Token	Duración
-access_token	15 minutos
-refresh_token	7 días
-📚 Endpoints principales de la API
-🔑 Autenticación
-Método	Endpoint	Descripción
-POST	/auth/register	Registrar usuario
-POST	/auth/login	Iniciar sesión
-POST	/auth/logout	Cerrar sesión
-GET	/auth/me	Obtener usuario actual
-📖 Libros
-Método	Endpoint	Descripción
-GET	/books	Obtener libros
-GET	/books/:id	Obtener libro por ID
-POST	/books	Crear libro
-PUT	/books/:id	Actualizar libro
-DELETE	/books/:id	Eliminar libro
-📦 Préstamos
-Método	Endpoint	Descripción
-GET	/loans	Listar préstamos
-POST	/loans	Crear préstamo
-POST	/loans/return	Devolver libro
-🎨 Funcionalidades del Frontend
-
-✅ Dashboard con estadísticas
-✅ Catálogo de libros
-✅ Búsqueda y paginación
-✅ Gestión de préstamos
-✅ Roles de usuario
-✅ Formularios validados
-✅ Notificaciones toast
-✅ Manejo global de errores
-✅ Confirmaciones de eliminación
-
-👥 Roles del sistema
-Rol	Permisos
-Admin	Control total
-Bibliotecario	Gestión de préstamos
-Usuario	Consultar libros
-🧪 Ejecutar tests
-
-Ir al backend:
-
-cd backend
-
-Ejecutar:
-
-npm test
-
-✅ Los tests usan PostgreSQL automáticamente.
-
-📂 Estructura del proyecto
-sistemaBiblioteca/
-├── .github/workflows/ci.yml
-├── backend/
-│   ├── src/
-│   │   ├── config/
-│   │   ├── controllers/
-│   │   ├── middleware/
-│   │   ├── routes/
-│   │   ├── utils/
-│   │   └── server.js
-│   ├── migrations/
-│   ├── seeds/
-│   ├── __tests__/
-│   ├── scripts/
-│   ├── docker-compose.yml
-│   └── package.json
-│
-├── frontend/
-│   ├── src/app/
-│   │   ├── components/
-│   │   ├── guards/
-│   │   ├── models/
-│   │   ├── pages/
-│   │   └── services/
-│   └── package.json
-│
-└── README.md
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Sistema de Biblioteca
-
-[![CI](https://github.com/tu-usuario/sistema-biblioteca/actions/workflows/ci.yml/badge.svg)](https://github.com/tu-usuario/sistema-biblioteca/actions/workflows/ci.yml)
-
-Aplicación web full-stack para gestión de biblioteca con catálogo de libros, control de disponibilidad y préstamos.
-
-## Stack Tecnológico
-
-| Capa         | Tecnología                                  |
-| ------------ | ------------------------------------------- |
-| Backend      | Node.js + Express 5                         |
-| Frontend     | Angular 18 (standalone components, Signals) |
-| Base de datos| PostgreSQL 16                                |
-| Autenticación| JWT (HttpOnly cookies + refresh tokens)     |
-| Contenedor   | Docker Compose                              |
-| CI/CD        | GitHub Actions                              |
-| Logging      | Pino                                        |
-| Tests        | Jest + Supertest                            |
-
-## Requisitos
-
-- Docker y Docker Compose
-- Node.js 18+
-- npm
-- Angular CLI (`npm install -g @angular/cli`)
-
----
-
-## Inicio rápido
-
-### 1. Clonar e instalar dependencias
-
-```bash
-# Backend
-cd backend
-npm install
-
-# Frontend
-cd ../frontend
-npm install
-```
-
-### 2. Levantar PostgreSQL
-
-```bash
-cd backend
-docker compose up -d
-```
-
-### 3. Configurar variables de entorno
-
-Editar `backend/.env` (valores por defecto listos para desarrollo).
-
-### 4. Migraciones y datos iniciales
-
-```bash
-cd backend
-npm run db:setup
-```
-
-### 5. Iniciar servidores
-
-```bash
-# Backend (http://localhost:3000)
-cd backend
-npm start
-
-# Frontend (http://localhost:4200)
+Frontend
 cd frontend
 ng serve
 ```
@@ -349,27 +158,8 @@ El sistema usa **JWT con HttpOnly cookies** (no localStorage):
 - Notificaciones toast para feedback de acciones
 - Manejo global de errores HTTP (401 → refresh → login)
 - Confirmación en acciones destructivas
-- Validaciones visuales en formularios
-- Diseño responsive para dispositivos móviles
-- Feedback visual en errores de conexión
-- Mejoras de experiencia de usuario en navegación
-
-### Validaciones implementadas
-
-- Validación de campos obligatorios
-- Validación de stock y valores negativos
-- Validación de formularios antes de enviar peticiones
-- Mensajes de error amigables para el usuario
 
 ---
-
-### Mejoras de interfaz
-
-- Optimización de estilos globales
-- Adaptación responsive para móviles y tablets
-- Mejoras visuales en tablas y formularios
-- Estandarización de botones y componentes visuales
-- Manejo visual de errores y estados de carga
 
 ## Tests
 
@@ -380,21 +170,9 @@ npm test
 
 Los tests de integración requieren una base de datos PostgreSQL configurada via variables de entorno. Por defecto usa `library_test`.
 
-También se incluyen validaciones básicas de formularios y flujos principales del sistema.
-
 En CI (GitHub Actions), la base de datos se provisiona automáticamente como service container.
 
 ---
-
-## Responsive Design
-
-La interfaz fue optimizada para:
-
-- Escritorio
-- Tablets
-- Dispositivos móviles
-
-Incluyendo mejoras en tablas, formularios y distribución de componentes.
 
 ## Estructura del proyecto
 
@@ -403,15 +181,15 @@ sistemaBiblioteca/
 ├── .github/workflows/ci.yml
 ├── backend/
 │   ├── src/
-│   │   ├── config/db.js
+│   │   ├── config/
 │   │   ├── controllers/
-│   │   ├── middleware/auth.js
-│   │   ├── routes/router.js
+│   │   ├── middleware/
+│   │   ├── routes/
 │   │   ├── utils/
 │   │   └── server.js
 │   ├── migrations/
 │   ├── seeds/
-│   ├── __tests__/
+│   ├── tests/
 │   ├── scripts/
 │   ├── docker-compose.yml
 │   └── package.json
@@ -424,4 +202,3 @@ sistemaBiblioteca/
 │   │   └── services/
 │   └── package.json
 └── README.md
-```
