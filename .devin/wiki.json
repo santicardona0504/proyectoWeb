@@ -1,1 +1,273 @@
-The content has been copied to your clipboard. Please paste it here to complete the file creation.
+{
+  "repo_notes": [
+    {
+      "content": ""
+    }
+  ],
+  "pages": [
+    {
+      "title": "Sistema de Biblioteca — Descripción General del Proyecto",
+      "purpose": "Introducción general al sistema de gestión de biblioteca: propósito, stack tecnológico, estructura del monorepo y enlaces a las principales secciones.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Inicio Rápido: Configuración e Instalación",
+      "purpose": "Guía paso a paso para el desarrollo local: clonar el repositorio, variables de entorno, Docker Compose, ejecución de migraciones y seeds, e inicio de los servidores backend y frontend.",
+      "parent": "Sistema de Biblioteca — Descripción General del Proyecto",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Descripción de la Arquitectura",
+      "purpose": "Describe la arquitectura desacoplada cliente-servidor, la estructura de directorios (backend/ y frontend/), el flujo de datos entre Angular SPA y la API Express, y las decisiones clave de diseño (cookies JWT, RBAC y componentes standalone de Angular).",
+      "parent": "Sistema de Biblioteca — Descripción General del Proyecto",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Backend",
+      "purpose": "Descripción general del backend en Node.js/Express: punto de entrada, middlewares, rutas, controladores, utilidades y capa de base de datos. Incluye enlaces a páginas hijas de cada subsistema.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Servidor Express y Middlewares",
+      "purpose": "Detalles del punto de entrada del servidor (server.js), middlewares globales (Helmet, CORS, rate limiting, cookie-parser, JSON body parsing), endpoint de salud, configuración de Swagger UI y apagado seguro.",
+      "parent": "Backend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Middleware de Autenticación y Estrategia JWT",
+      "purpose": "Explicación detallada de la estrategia JWT con doble token: verifyToken, optionalAuth, requireRole, generación y rotación de tokens, configuración de cookies HttpOnly y mecanismo de refresh silencioso.",
+      "parent": "Backend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Rutas API y Controladores",
+      "purpose": "Documenta todos los endpoints REST agrupados por dominio (Auth, Libros, Préstamos, Usuarios), sus middlewares, estructuras de request/response, validaciones y manejo de errores.",
+      "parent": "Backend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Controlador de Libros",
+      "purpose": "Cubre las operaciones CRUD del catálogo de libros: getAll (paginación y búsqueda), getById, getStats, create, update (PUT), patch (actualización dinámica de campos), remove, validación ISBN y manejo de errores PostgreSQL.",
+      "parent": "Backend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Controlador de Préstamos",
+      "purpose": "Cubre el ciclo de vida de los préstamos: préstamo transaccional de libros (SELECT FOR UPDATE), procesamiento de devoluciones, consultas paginadas getAll/getActive/getByUser, máquina de estados y ROLLBACK en fallos.",
+      "parent": "Backend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Controlador de Usuarios",
+      "purpose": "Cubre los endpoints de administración de usuarios accesibles solo para administradores: listar usuarios, obtener por ID, cambiar rol, resetear contraseña y eliminar usuario.",
+      "parent": "Backend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Capa de Base de Datos",
+      "purpose": "Describe el pool de conexiones PostgreSQL (db.js), pgmconfig.js, configuración Docker Compose, archivos de migración (books, usuarios, prestamos, created_at) y pipeline de seeds.",
+      "parent": "Backend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Frontend",
+      "purpose": "Descripción general de la SPA en Angular 18: arquitectura standalone, rutas, servicios, guards, interceptores y componentes UI.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Rutas y Navegación",
+      "purpose": "Documenta la configuración de rutas Angular (app.routes.ts), componentes standalone lazy-loaded, authGuard, roleGuard, lógica de redirección y renderizado dinámico del NavbarComponent según el rol.",
+      "parent": "Frontend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Autenticación y Manejo de Sesiones",
+      "purpose": "Describe AuthService (Angular Signals, init/login/register/logout/refreshSession), authInterceptor (withCredentials, reintento 401 con refresh token, STATUS_MESSAGES) y LoginComponent.",
+      "parent": "Frontend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Páginas y Componentes Funcionales",
+      "purpose": "Descripción general de los componentes principales (Dashboard, BookList, AddBook, Loans, Users) y sus responsabilidades.",
+      "parent": "Frontend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Páginas del Catálogo de Libros",
+      "purpose": "Detalles de BookListComponent (búsqueda, paginación y BookCard) y AddBookComponent (formularios, validación ISBN, envío y navegación).",
+      "parent": "Frontend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Página de Gestión de Préstamos",
+      "purpose": "Describe LoansComponent: pestañas de préstamos activos/historial, paginación, flujo de devoluciones, bloqueo optimista con Set y notificaciones toast.",
+      "parent": "Frontend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Dashboard y Página de Usuarios",
+      "purpose": "Describe DashboardComponent (estadísticas de biblioteca) y UsersComponent (administración de usuarios con UserService).",
+      "parent": "Frontend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Servicios Compartidos y Utilidades UI",
+      "purpose": "Documenta BookService, LoanService, UserService, ToastService, LoggerService, ToastComponent y el sistema global de estilos CSS.",
+      "parent": "Frontend",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Pruebas",
+      "purpose": "Descripción general de la estrategia de testing en backend (Jest + Supertest) y frontend (Karma/Jasmine + Playwright).",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Pruebas de Integración Backend",
+      "purpose": "Describe configuración Jest, helpers, api.test.js, setup/teardown de base de datos y autenticación basada en cookies.",
+      "parent": "Pruebas",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Pruebas Unitarias Frontend",
+      "purpose": "Describe configuración Angular testing (Karma/Jasmine) y pruebas de servicios como AuthService, AuthInterceptor, BookService y LoanService.",
+      "parent": "Pruebas",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Pruebas E2E Frontend",
+      "purpose": "Describe configuración Playwright, specs de login/libros/préstamos, patrones beforeEach y reportes playwright-report.",
+      "parent": "Pruebas",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "CI/CD y Despliegue",
+      "purpose": "Documenta el pipeline GitHub Actions, Docker Compose, variables de entorno y consideraciones de producción.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Pipeline CI de GitHub Actions",
+      "purpose": "Desglose paso a paso del workflow ci.yml: triggers, contenedor PostgreSQL, jobs backend/frontend, caching y secrets requeridos.",
+      "parent": "CI/CD y Despliegue",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Docker y Configuración de Entorno",
+      "purpose": "Describe docker-compose.yml, volumen pgdata, variables .env.example, pgmconfig.js y run-seed.js.",
+      "parent": "CI/CD y Despliegue",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Glosario",
+      "purpose": "Definiciones de términos específicos del proyecto, vocabulario del dominio, abreviaturas y conceptos arquitectónicos.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    }
+  ]
+}
