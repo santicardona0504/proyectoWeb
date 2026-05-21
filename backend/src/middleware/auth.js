@@ -29,14 +29,14 @@ function setTokenCookies(res, accessToken, refreshToken) {
   });
   res.cookie('refresh_token', refreshToken, {
     ...COOKIE_OPTIONS,
-    path: '/auth',
+    path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 }
 
 function clearTokenCookies(res) {
   res.clearCookie('access_token', { ...COOKIE_OPTIONS });
-  res.clearCookie('refresh_token', { ...COOKIE_OPTIONS, path: '/auth' });
+  res.clearCookie('refresh_token', { ...COOKIE_OPTIONS, path: '/' });
 }
 
 function verifyToken(req, res, next) {
