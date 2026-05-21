@@ -5,7 +5,7 @@ import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 import { ToastService } from './toast.service';
 
-const PUBLIC_URLS = ['/auth/login', '/auth/register'];
+const PUBLIC_URLS = ['/auth/login', '/auth/register', '/auth/refresh'];
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
@@ -20,7 +20,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(clonedReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && authService.isLoggedIn()) {
+      if (error.status === 401) {
         return authService.refreshSession().pipe(
           switchMap(() => next(clonedReq)),
           catchError((err) => {

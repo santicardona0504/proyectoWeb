@@ -1,8 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { ToastComponent } from './components/toast/toast.component';
-import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -35,11 +34,6 @@ import { AuthService } from './services/auth.service';
     .footer p { margin: 0; }
   `],
 })
-export class AppComponent implements OnInit {
-  private authService = inject(AuthService);
+export class AppComponent {
   year = new Date().getFullYear();
-
-  ngOnInit() {
-    this.authService.init();
-  }
 }

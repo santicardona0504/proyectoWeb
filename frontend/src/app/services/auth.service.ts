@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, map } from 'rxjs';
+import { Observable, tap, map, firstValueFrom, finalize } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface User {
@@ -19,23 +19,27 @@ interface ApiResponse<T> {
 export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`;
   private userSignal = signal<User | null>(null);
-  private loaded = false;
+  private initPromise: Promise<void>;
+  private refreshObservable: Observable<void> | null = null;
 
   isLoggedIn = computed(() => this.userSignal() !== null);
   currentUser = computed(() => this.userSignal());
   isAdmin = computed(() => this.userSignal()?.rol === 'admin');
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.initPromise = this.init();
+  }
 
-  init() {
-    if (this.loaded) return;
-    this.loaded = true;
-    this.http.get<ApiResponse<{ user: User }>>(`${this.apiUrl}/me`, { withCredentials: true })
-      .pipe(map(res => res.data.user))
-      .subscribe({
-        next: (user) => this.userSignal.set(user),
-        error: () => this.userSignal.set(null),
-      });
+  private init(): Promise<void> {
+    return firstValueFrom(
+      this.http.get<ApiResponse<{ user: User }>>(`${this.apiUrl}/me`, { withCredentials: true })
+        .pipe(map(res => res.data.user))
+    ).then(user => this.userSignal.set(user))
+    .catch(() => this.userSignal.set(null));
+  }
+
+  waitForInit(): Promise<void> {
+    return this.initPromise;
   }
 
   login(email: string, password: string): Observable<User> {
@@ -63,7 +67,17 @@ export class AuthService {
   }
 
   refreshSession(): Observable<void> {
-    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
-      .pipe(map(() => undefined));
+    if (this.refreshObservable) {
+      return this.refreshObservable;
+    }
+
+    this.refreshObservable = this.http.post<ApiResponse<void>>(
+      `${this.apiUrl}/refresh`, {}, { withCredentials: true }
+    ).pipe(
+      map(() => undefined),
+      finalize(() => this.refreshObservable = null),
+    );
+
+    return this.refreshObservable;
   }
 }
