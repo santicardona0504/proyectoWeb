@@ -1,69 +1,77 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, map } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
+import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 
-export interface User {
-  id: number;
-  nombre: string;
-  email: string;
-  rol: string;
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-}
-
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class AuthService {
-  private apiUrl = `${environment.apiUrl}/auth`;
-  private userSignal = signal<User | null>(null);
-  private loaded = false;
 
-  isLoggedIn = computed(() => this.userSignal() !== null);
-  currentUser = computed(() => this.userSignal());
-  isAdmin = computed(() => this.userSignal()?.rol === 'admin');
+  private readonly TOKEN_KEY = 'auth_token';
+  private readonly apiUrl = environment.apiUrl; // e.g. http://18.191.255.5:3000
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
-  init() {
-    if (this.loaded) return;
-    this.loaded = true;
-    this.http.get<ApiResponse<{ user: User }>>(`${this.apiUrl}/me`, { withCredentials: true })
-      .pipe(map(res => res.data.user))
-      .subscribe({
-        next: (user) => this.userSignal.set(user),
-        error: () => this.userSignal.set(null),
-      });
-  }
-
-  login(email: string, password: string): Observable<User> {
-    return this.http.post<ApiResponse<{ user: User }>>(
-      `${this.apiUrl}/login`, { email, password }, { withCredentials: true }
-    ).pipe(
-      map(res => res.data.user),
-      tap(user => this.userSignal.set(user)),
+  login(credentials: { email: string; password: string }): Observable<any> {
+    return this.http.post(`${this.apiUrl}/auth/login`, credentials).pipe(
+      tap((response: any) => {
+        if (response?.token) {
+          localStorage.setItem(this.TOKEN_KEY, response.token);
+        }
+      }),
+      catchError(err => {
+        console.error('Error en login:', err);
+        return throwError(() => err);
+      })
     );
   }
 
-  register(nombre: string, email: string, password: string): Observable<User> {
-    return this.http.post<ApiResponse<{ user: User }>>(
-      `${this.apiUrl}/register`, { nombre, email, password }, { withCredentials: true }
-    ).pipe(
-      map(res => res.data.user),
-      tap(user => this.userSignal.set(user)),
+  getToken(): string | null {
+    const token = localStorage.getItem(this.TOKEN_KEY);
+    // Verificar que el token no esté expirado antes de devolverlo
+    if (token && this.isTokenExpired(token)) {
+      this.logout();
+      return null;
+    }
+    return token;
+  }
+
+  isAuthenticated(): boolean {
+    const token = this.getToken();
+    return !!token;
+  }
+
+  logout(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    // Limpiar cualquier otro dato de sesión
+    sessionStorage.clear();
+  }
+
+  refreshToken(): Observable<string> {
+    return this.http.post<any>(`${this.apiUrl}/auth/refresh`, {}).pipe(
+      tap((response: any) => {
+        if (response?.token) {
+          localStorage.setItem(this.TOKEN_KEY, response.token);
+        }
+      }),
+      catchError(err => {
+        this.logout();
+        return throwError(() => err);
+      })
     );
   }
 
-  logout() {
-    this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true })
-      .subscribe({ error: () => {} });
-    this.userSignal.set(null);
-  }
-
-  refreshSession(): Observable<void> {
-    return this.http.post<ApiResponse<void>>(`${this.apiUrl}/refresh`, {}, { withCredentials: true })
-      .pipe(map(() => undefined));
+  // Decodifica el JWT y verifica expiración sin librerías externas
+  private isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const now = Math.floor(Date.now() / 1000);
+      return payload.exp < now;
+    } catch (e) {
+      return true; // Si no se puede decodificar, se considera expirado
+    }
   }
 }
