@@ -30,7 +30,7 @@ describe('AuthService', () => {
   describe('init()', () => {
     it('should load user from /auth/me on init', () => {
       const mockUser = { id: 1, nombre: 'Admin', email: 'admin@test.com', rol: 'admin' };
-      service.init();
+      service['init']();
       const req = httpMock.expectOne(`${environment.apiUrl}/auth/me`);
       expect(req.request.method).toBe('GET');
       expect(req.request.withCredentials).toBeTrue();
@@ -41,7 +41,7 @@ describe('AuthService', () => {
     });
 
     it('should set user to null on error', () => {
-      service.init();
+      service['init']();
       const req = httpMock.expectOne(`${environment.apiUrl}/auth/me`);
       req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
       expect(service.currentUser()).toBeNull();
@@ -49,9 +49,9 @@ describe('AuthService', () => {
     });
 
     it('should not call /auth/me twice', () => {
-      service.init();
+      service['init']();
       httpMock.expectOne(`${environment.apiUrl}/auth/me`).flush({ success: true, data: { user: { id: 1, nombre: 'A', email: 'a@a.com', rol: 'usuario' } } });
-      service.init();
+      service['init']();
       httpMock.expectNone(`${environment.apiUrl}/auth/me`);
     });
   });
