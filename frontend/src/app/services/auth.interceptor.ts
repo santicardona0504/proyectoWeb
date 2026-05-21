@@ -1,103 +1,55 @@
-import { Injectable } from '@angular/core';
-import {
-  HttpRequest,
-  HttpHandler,
-  HttpEvent,
-  HttpInterceptor,
-  HttpErrorResponse
-} from '@angular/common/http';
-import { Observable, throwError, BehaviorSubject } from 'rxjs';
-import { catchError, filter, switchMap, take, finalize } from 'rxjs/operators';
-import { AuthService } from '../services/auth.service';
+import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { catchError, switchMap, throwError } from 'rxjs';
+import { AuthService } from './auth.service';
+import { ToastService } from './toast.service';
 
-@Injectable()
-export class AuthInterceptor implements HttpInterceptor {
+const PUBLIC_URLS = ['/auth/login', '/auth/register'];
 
-  private isRefreshing = false;
-  private refreshTokenSubject: BehaviorSubject<string | null> = new BehaviorSubject<string | null>(null);
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const toastService = inject(ToastService);
 
-  // Rutas que NO deben llevar token (lista blanca)
-  private readonly PUBLIC_URLS = ['/auth/login', '/auth/register'];
-
-  constructor(private authService: AuthService, private router: Router) {}
-
-  intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // No agregar token a rutas públicas
-    if (this.isPublicUrl(request.url)) {
-      return next.handle(request);
-    }
-
-    const token = this.authService.getToken();
-
-    if (token) {
-      request = this.addTokenToRequest(request, token);
-    }
-
-    return next.handle(request).pipe(
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 401) {
-          return this.handle401Error(request, next);
-        }
-
-        if (error.status === 403) {
-          // Token inválido — limpiar sesión y redirigir
-          this.authService.logout();
-          this.router.navigate(['/login']);
-          return throwError(() => error);
-        }
-
-        if (error.status === 429) {
-          // NO reintentar en rate limit — simplemente propagar el error
-          console.warn('Rate limit alcanzado. Esperando antes de reintentar.');
-          return throwError(() => error);
-        }
-
-        return throwError(() => error);
-      })
-    );
+  if (PUBLIC_URLS.some(url => req.url.includes(url))) {
+    return next(req);
   }
 
-  private isPublicUrl(url: string): boolean {
-    return this.PUBLIC_URLS.some(publicUrl => url.includes(publicUrl));
-  }
+  const clonedReq = req.clone({ withCredentials: true });
 
-  private addTokenToRequest(request: HttpRequest<any>, token: string): HttpRequest<any> {
-    return request.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
+  return next(clonedReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401 && authService.isLoggedIn()) {
+        return authService.refreshSession().pipe(
+          switchMap(() => next(clonedReq)),
+          catchError((err) => {
+            authService.logout();
+            router.navigate(['/login']);
+            return throwError(() => err);
+          })
+        );
       }
-    });
-  }
 
-  private handle401Error(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    if (!this.isRefreshing) {
-      this.isRefreshing = true;
-      this.refreshTokenSubject.next(null);
+      if (error.status === 403) {
+        toastService.error('No tenés permisos para esta acción.');
+        authService.logout();
+        router.navigate(['/login']);
+        return throwError(() => error);
+      }
 
-      return this.authService.refreshToken().pipe(
-        switchMap((token: string) => {
-          this.isRefreshing = false;
-          this.refreshTokenSubject.next(token);
-          return next.handle(this.addTokenToRequest(request, token));
-        }),
-        catchError((err) => {
-          this.isRefreshing = false;
-          this.authService.logout();
-          this.router.navigate(['/login']);
-          return throwError(() => err);
-        }),
-        finalize(() => {
-          this.isRefreshing = false;
-        })
-      );
-    }
+      if (error.status === 429) {
+        toastService.error('Demasiadas peticiones. Esperá un momento.');
+        return throwError(() => error);
+      }
 
-    // Si ya se está refrescando, esperar y reintentar
-    return this.refreshTokenSubject.pipe(
-      filter(token => token !== null),
-      take(1),
-      switchMap(token => next.handle(this.addTokenToRequest(request, token!)))
-    );
-  }
-}
+      if (error.error?.error) {
+        toastService.error(error.error.error);
+      } else if (error.status >= 500) {
+        toastService.error('Error del servidor. Intentá de nuevo más tarde.');
+      }
+
+      return throwError(() => error);
+    })
+  );
+};
