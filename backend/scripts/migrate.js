@@ -16,6 +16,65 @@ function getHostFromUrl(url) {
   }
 }
 
+function parseUpSql(sql) {
+  const downMatch = sql.match(/^--\s*Down/m);
+  return downMatch ? sql.substring(0, downMatch.index).trim() : sql.trim();
+}
+
+async function runMigrations(pool) {
+  console.log('[migrate] Verificando tabla pgmigrations...');
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pgmigrations (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL UNIQUE,
+      run_on TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  const migrationsDir = path.resolve(__dirname, '..', 'migrations');
+  console.log('[migrate] Directorio de migraciones:', migrationsDir);
+
+  if (!fs.existsSync(migrationsDir)) {
+    throw new Error(`No se encuentra el directorio de migraciones: ${migrationsDir}`);
+  }
+
+  const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+  console.log('[migrate] Archivos de migración encontrados:', files.length);
+
+  if (files.length === 0) {
+    throw new Error(`No hay archivos .sql en ${migrationsDir}`);
+  }
+
+  const { rows: ran } = await pool.query('SELECT name FROM pgmigrations');
+  const ranNames = new Set(ran.map(r => r.name));
+  console.log('[migrate] Migraciones ya aplicadas:', ranNames.size);
+
+  for (const file of files) {
+    if (ranNames.has(file)) {
+      console.log(`[migrate] Ya aplicada: ${file}`);
+      continue;
+    }
+
+    console.log(`[migrate] Aplicando: ${file}`);
+    const filePath = path.join(migrationsDir, file);
+    const rawSql = fs.readFileSync(filePath, 'utf8');
+    const upSql = parseUpSql(rawSql);
+
+    try {
+      await pool.query(upSql);
+    } catch (sqlErr) {
+      throw new Error(`Error SQL en ${file}: ${sqlErr.message}\nSQL:\n${upSql.substring(0, 500)}`);
+    }
+
+    await pool.query('INSERT INTO pgmigrations (name, run_on) VALUES ($1, NOW())', [file]);
+    console.log(`[migrate] Completada: ${file}`);
+  }
+
+  console.log('[migrate] ========================================');
+  console.log('[migrate] Todas las migraciones aplicadas correctamente.');
+  console.log('[migrate] ========================================');
+}
+
 async function main() {
   console.log('[migrate] ========================================');
   console.log('[migrate] Iniciando migraciones...');
@@ -59,111 +118,49 @@ async function main() {
     if (connErr.name === 'AggregateError' && connErr.errors) {
       for (const e of connErr.errors) {
         console.error('[migrate]  - Error interno:', e.message || e.code || e);
-        console.error('[migrate]    Código:', e.code);
-        if (e.hint) console.error('[migrate]    Sugerencia:', e.hint);
+        if (e.code) console.error('[migrate]    Código:', e.code);
       }
     }
 
     console.error('[migrate] Mensaje:', connErr.message || '(sin mensaje)');
-    console.error('[migrate] Código:', connErr.code);
 
-    if (connErr.code === 'ECONNREFUSED' || connErr.message?.includes('ECONNREFUSED') ||
-        connErr.errors?.some?.(e => e.code === 'ECONNREFUSED')) {
+    const isRefused = connErr.code === 'ECONNREFUSED' ||
+      connErr.message?.includes('ECONNREFUSED') ||
+      connErr.errors?.some?.(e => e.code === 'ECONNREFUSED');
+
+    if (isRefused) {
       console.error('[migrate]');
-      console.error('[migrate] CAUSA MÁS PROBABLE:');
-      console.error('[migrate] El Web Service NO puede alcanzar la base de datos PostgreSQL.');
-      console.error('[migrate]');
-      console.error('[migrate] Posibles razones:');
-      console.error('[migrate] 1) Web Service y PostgreSQL están en DISTINTAS regiones de Render.');
-      console.error('[migrate]    → Ambos deben estar en la misma región (ej: Oregon, Frankfurt, etc.)');
-      console.error('[migrate] 2) La DATABASE_URL no es la Internal Database URL de Render.');
-      console.error('[migrate]    → En Render Dashboard > PostgreSQL > biblioteca-db >');
-      console.error('[migrate]      copia la "Internal Database URL" y pégala en');
-      console.error('[migrate]      Web Service > Environment > DATABASE_URL');
-      console.error('[migrate] 3) La base de datos no existe o fue eliminada.');
-      console.error('[migrate]');
+      console.error('[migrate] CAUSA: El Web Service no puede alcanzar PostgreSQL.');
+      console.error('[migrate] 1) Web Service y DB deben estar en la MISMA región de Render');
+      console.error('[migrate] 2) DATABASE_URL debe ser la Internal Database URL de Render');
       if (process.env.DATABASE_URL) {
         console.error('[migrate] Host actual:', getHostFromUrl(process.env.DATABASE_URL));
       }
     } else if (connErr.code === '28P01') {
-      console.error('[migrate] Autenticación fallida — usuario o contraseña incorrectos');
+      console.error('[migrate] Autenticación fallida — usuario/contraseña incorrectos');
     } else if (connErr.code === '3D000') {
-      console.error('[migrate] La base de datos especificada no existe');
-    } else if (connErr.message?.includes('SSL') || connErr.message?.includes('ssl')) {
-      console.error('[migrate] Error SSL — Render requiere conexión SSL');
+      console.error('[migrate] La base de datos no existe');
+    } else if (connErr.message?.match(/SSL|ssl/)) {
+      console.error('[migrate] Render requiere SSL — configurado automáticamente');
     }
 
-    console.error('[migrate] Stack:', connErr.stack);
     await pool.end();
     process.exit(1);
   }
 
-  console.log('[migrate] Verificando tabla pgmigrations...');
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS pgmigrations (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(255) NOT NULL UNIQUE,
-      run_on TIMESTAMP DEFAULT NOW()
-    )
-  `);
-
-  const migrationsDir = path.resolve(__dirname, '..', 'migrations');
-  console.log('[migrate] Directorio de migraciones:', migrationsDir);
-
-  if (!fs.existsSync(migrationsDir)) {
-    console.error('[migrate] ERROR: No se encuentra el directorio:', migrationsDir);
+  try {
+    await runMigrations(pool);
+  } catch (migrateErr) {
+    console.error('[migrate] ERROR:', migrateErr.message);
     await pool.end();
     process.exit(1);
-  }
-
-  const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
-  console.log('[migrate] Archivos de migración encontrados:', files.length);
-
-  if (files.length === 0) {
-    console.error('[migrate] ERROR: No hay archivos .sql en', migrationsDir);
-    await pool.end();
-    process.exit(1);
-  }
-
-  const { rows: ran } = await pool.query('SELECT name FROM pgmigrations');
-  const ranNames = new Set(ran.map(r => r.name));
-  console.log('[migrate] Migraciones ya aplicadas:', ranNames.size);
-
-  for (const file of files) {
-    if (ranNames.has(file)) {
-      console.log(`[migrate] Ya aplicada: ${file}`);
-      continue;
-    }
-
-    console.log(`[migrate] Aplicando: ${file}`);
-    const filePath = path.join(migrationsDir, file);
-
-    const rawSql = fs.readFileSync(filePath, 'utf8');
-    const downMatch = rawSql.match(/^--\s*Down/m);
-    const upSql = downMatch ? rawSql.substring(0, downMatch.index).trim() : rawSql.trim();
-
-    try {
-      await pool.query(upSql);
-    } catch (sqlErr) {
-      console.error(`[migrate] ERROR SQL en ${file}:`, sqlErr.message);
-      console.error('[migrate] SQL que falló (primeros 500 chars):');
-      console.error(upSql.substring(0, 500));
-      await pool.end();
-      process.exit(1);
-    }
-
-    await pool.query('INSERT INTO pgmigrations (name, run_on) VALUES ($1, NOW())', [file]);
-    console.log(`[migrate] Completada: ${file}`);
   }
 
   await pool.end();
-  console.log('[migrate] ========================================');
-  console.log('[migrate] Todas las migraciones aplicadas correctamente.');
-  console.log('[migrate] ========================================');
 }
 
-main().catch((err) => {
-  console.error('[migrate] ERROR FATAL:', err.message);
-  console.error('[migrate] Stack:', err.stack);
-  process.exit(1);
-});
+if (require.main === module) {
+  main();
+}
+
+module.exports = { runMigrations };

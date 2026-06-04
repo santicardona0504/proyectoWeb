@@ -4,26 +4,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
 
-const DATABASE_URL = process.env.DATABASE_URL;
-
-const pool = DATABASE_URL
-  ? new Pool({
-      connectionString: DATABASE_URL,
-      connectionTimeoutMillis: 10000,
-      ...(process.env.NODE_ENV === 'production'
-        ? { ssl: { rejectUnauthorized: false } }
-        : {}),
-    })
-  : new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT, 10) || 5432,
-      database: process.env.DB_NAME || 'library',
-      user: process.env.DB_USER || 'admin',
-      password: process.env.DB_PASSWORD || 'admin123',
-      connectionTimeoutMillis: 10000,
-    });
-
-async function runSeeds() {
+async function runSeed(pool) {
   const seedsDir = path.join(__dirname, '..', 'seeds');
   const files = fs.readdirSync(seedsDir).sort();
 
@@ -53,14 +34,43 @@ async function runSeeds() {
       `UPDATE usuarios SET rol = 'admin', password_hash = $1 WHERE email = 'admin@biblioteca.com' AND (rol != 'admin' OR password_hash != $1)`,
       [password_hash]
     );
-    console.log(`Usuario admin verificado (email: admin@biblioteca.com)`);
+    console.log('Usuario admin verificado');
   }
 
-  await pool.end();
   console.log('Todos los seeds se ejecutaron correctamente.');
 }
 
-runSeeds().catch((err) => {
-  console.error('Error al ejecutar seeds:', err.message);
-  process.exit(1);
-});
+async function main() {
+  const DATABASE_URL = process.env.DATABASE_URL;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  const pool = DATABASE_URL
+    ? new Pool({
+        connectionString: DATABASE_URL,
+        connectionTimeoutMillis: 10000,
+        ...(isProduction ? { ssl: { rejectUnauthorized: false } } : {}),
+      })
+    : new Pool({
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT, 10) || 5432,
+        database: process.env.DB_NAME || 'library',
+        user: process.env.DB_USER || 'admin',
+        password: process.env.DB_PASSWORD || 'admin123',
+        connectionTimeoutMillis: 10000,
+      });
+
+  try {
+    await runSeed(pool);
+  } catch (err) {
+    console.error('Error al ejecutar seeds:', err.message);
+    process.exit(1);
+  }
+
+  await pool.end();
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = { runSeed };
