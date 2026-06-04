@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: biblioteca
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: biblioteca-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://biblioteca.onrender.com
+      - key: ADMIN_PASSWORD
+        sync: false
+
+databases:
+  - name: biblioteca-db
+    databaseName: library
+    plan: free

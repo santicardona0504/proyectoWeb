@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const router = require('./routes/router');
 const setupSwagger = require('./config/swagger');
 const { error } = require('./utils/jsonResponse');
@@ -16,10 +17,15 @@ if (!process.env.JWT_SECRET) {
 }
 
 const PORT = parseInt(process.env.PORT, 10) || 3000;
+const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
+
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? process.env.CORS_ORIGIN
@@ -68,13 +74,22 @@ setupSwagger(app);
 
 app.use(router);
 
+app.use(express.static(PUBLIC_DIR, {
+  index: false,
+  maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
+}));
+
+app.get('*', (req, res) => {
+  const apiPatterns = ['/auth', '/books', '/loans', '/users', '/health', '/api-docs'];
+  if (apiPatterns.some(p => req.path.startsWith(p)) || path.extname(req.path)) {
+    return error(res, 'Ruta no encontrada', 404);
+  }
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
+
 app.use((err, _req, res, _next) => {
   logger.error({ err }, 'Error no manejado');
   error(res, 'Error interno del servidor', 500);
-});
-
-app.use((_req, res) => {
-  error(res, 'Ruta no encontrada', 404);
 });
 
 const server = app.listen(PORT, () => {
