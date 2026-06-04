@@ -7,11 +7,10 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "build": "cd ../frontend && npm install && npm run build && mkdir -p ../backend/public && rm -rf ../backend/public/* && cp -r dist/frontend/browser/* ../backend/public/",
-    "migrate:up": "node-pg-migrate up --config pgmconfig.js",
-    "migrate:down": "node-pg-migrate down --config pgmconfig.js",
+    "migrate": "node scripts/migrate.js",
     "migrate:create": "node-pg-migrate create --config pgmconfig.js --migration-file-language sql",
     "seed": "node scripts/run-seed.js",
-    "db:setup": "npm run migrate:up && npm run seed",
+    "db:setup": "node scripts/migrate.js && npm run seed",
     "test": "node --experimental-vm-modules node_modules/.bin/jest --forceExit",
     "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch"
   },
