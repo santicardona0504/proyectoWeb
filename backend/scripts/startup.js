@@ -56,9 +56,9 @@ async function main() {
   }
 
   try {
-    const { runSeed } = require('./run-seed');
+    const { runSeeds } = require('./run-seed');
     console.log('[startup] Ejecutando seed...');
-    await runSeed(pool);
+    await runSeeds(pool);
   } catch (err) {
     console.error('[startup] ERROR EN SEED:', err.message);
     console.error('[startup] Stack completo:', err.stack);

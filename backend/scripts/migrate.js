@@ -17,7 +17,7 @@ function getHostFromUrl(url) {
 }
 
 function parseUpSql(sql) {
-  const downMatch = sql.match(/^--\s*Down/m);
+  const downMatch = sql.match(/^--\s*down/mi);
   return downMatch ? sql.substring(0, downMatch.index).trim() : sql.trim();
 }
 
