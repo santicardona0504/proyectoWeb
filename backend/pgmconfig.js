@@ -11,6 +11,9 @@ const databaseUrl = process.env.DATABASE_URL || (() => {
   return `postgres://${encodeURIComponent(DB_USER)}:${encodeURIComponent(DB_PASSWORD)}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
 })();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 module.exports = {
   url: databaseUrl,
+  ...(isProduction ? { ssl: { rejectUnauthorized: false } } : {}),
 };
