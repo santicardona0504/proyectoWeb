@@ -3,7 +3,7 @@ services:
     name: biblioteca
     runtime: node
     rootDir: backend
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npm run build
     startCommand: node scripts/startup.js
     healthCheckPath: /health
     autoDeploy: true
