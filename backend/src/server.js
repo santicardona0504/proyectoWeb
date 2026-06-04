@@ -79,7 +79,7 @@ app.use(express.static(PUBLIC_DIR, {
   maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
 }));
 
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
   const apiPatterns = ['/auth', '/books', '/loans', '/users', '/health', '/api-docs'];
   if (apiPatterns.some(p => req.path.startsWith(p)) || path.extname(req.path)) {
     return error(res, 'Ruta no encontrada', 404);

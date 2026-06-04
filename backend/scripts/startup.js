@@ -8,6 +8,6 @@ function run(step, cmd) {
   execSync(cmd, { cwd: ROOT, stdio: 'inherit' });
 }
 
-run('migraciones', 'node node_modules/.bin/node-pg-migrate up --config pgmconfig.js');
+run('migraciones', 'node scripts/migrate.js');
 run('seed', 'node scripts/run-seed.js');
 run('servidor', 'node src/server.js');
