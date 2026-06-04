@@ -9,6 +9,7 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const pool = DATABASE_URL
   ? new Pool({
       connectionString: DATABASE_URL,
+      connectionTimeoutMillis: 10000,
       ...(process.env.NODE_ENV === 'production'
         ? { ssl: { rejectUnauthorized: false } }
         : {}),
@@ -19,6 +20,7 @@ const pool = DATABASE_URL
       database: process.env.DB_NAME || 'library',
       user: process.env.DB_USER || 'admin',
       password: process.env.DB_PASSWORD || 'admin123',
+      connectionTimeoutMillis: 10000,
     });
 
 async function runSeeds() {

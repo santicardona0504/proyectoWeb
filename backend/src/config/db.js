@@ -5,6 +5,7 @@ const pool = new Pool(
   process.env.DATABASE_URL
     ? {
         connectionString: process.env.DATABASE_URL,
+        connectionTimeoutMillis: 10000,
         ...(process.env.NODE_ENV === 'production'
           ? { ssl: { rejectUnauthorized: false } }
           : {}),
@@ -15,6 +16,7 @@ const pool = new Pool(
         database: process.env.DB_NAME || 'library',
         user: process.env.DB_USER || 'admin',
         password: process.env.DB_PASSWORD || 'admin123',
+        connectionTimeoutMillis: 10000,
       }
 );
 
