@@ -4,13 +4,17 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
 
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT, 10) || 5432,
-  database: process.env.DB_NAME || 'library',
-  user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD || 'admin123',
-});
+const DATABASE_URL = process.env.DATABASE_URL;
+
+const pool = DATABASE_URL
+  ? new Pool({ connectionString: DATABASE_URL })
+  : new Pool({
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT, 10) || 5432,
+      database: process.env.DB_NAME || 'library',
+      user: process.env.DB_USER || 'admin',
+      password: process.env.DB_PASSWORD || 'admin123',
+    });
 
 async function runSeeds() {
   const seedsDir = path.join(__dirname, '..', 'seeds');
