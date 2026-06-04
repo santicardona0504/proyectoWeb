@@ -28,7 +28,7 @@ app.use(helmet({
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? process.env.CORS_ORIGIN
+    ? (process.env.CORS_ORIGIN || `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`)
     : 'http://localhost:4200',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
