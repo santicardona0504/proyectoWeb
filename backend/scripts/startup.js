@@ -72,4 +72,7 @@ async function main() {
   require('../src/server');
 }
 
-main();
+main().catch(err => {
+  console.error('[startup] Error fatal no capturado:', err);
+  process.exit(1);
+});

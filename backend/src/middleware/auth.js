@@ -68,7 +68,7 @@ function verifyToken(req, res, next) {
     });
     res.cookie('refresh_token', newRefreshToken, {
       ...COOKIE_OPTIONS,
-      path: '/auth',
+      path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 

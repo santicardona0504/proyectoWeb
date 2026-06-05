@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const fs = require('fs');
 const path = require('path');
 const router = require('./routes/router');
 const setupSwagger = require('./config/swagger');
@@ -20,6 +21,8 @@ const PORT = parseInt(process.env.PORT, 10) || 3000;
 const PUBLIC_DIR = path.resolve(__dirname, '..', 'public');
 
 const app = express();
+
+app.set('trust proxy', 1);
 
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -84,7 +87,12 @@ app.get('/{*path}', (req, res) => {
   if (apiPatterns.some(p => req.path.startsWith(p)) || path.extname(req.path)) {
     return error(res, 'Ruta no encontrada', 404);
   }
-  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+  const indexPath = path.join(PUBLIC_DIR, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    error(res, 'Frontend no disponible — ejecutá npm run build primero', 503);
+  }
 });
 
 app.use((err, _req, res, _next) => {

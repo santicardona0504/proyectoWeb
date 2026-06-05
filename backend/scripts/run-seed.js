@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
 
 async function runSeeds(pool) {
+  // Control de seeds ya ejecutados
   await pool.query(`
     CREATE TABLE IF NOT EXISTS seedmigrations (
       id SERIAL PRIMARY KEY,
@@ -14,6 +15,11 @@ async function runSeeds(pool) {
   `);
 
   const seedsDir = path.join(__dirname, '..', 'seeds');
+
+  if (!fs.existsSync(seedsDir)) {
+    throw new Error(`No se encuentra el directorio de seeds: ${seedsDir}`);
+  }
+
   const files = fs.readdirSync(seedsDir).filter(f => f.endsWith('.sql')).sort();
   const { rows: ran } = await pool.query('SELECT name FROM seedmigrations');
   const ranNames = new Set(ran.map(r => r.name));
@@ -23,14 +29,21 @@ async function runSeeds(pool) {
       console.log(`Seed ya aplicado: ${file}`);
       continue;
     }
+
     const sql = fs.readFileSync(path.join(seedsDir, file), 'utf8');
+
     if (sql.trim()) {
       await pool.query(sql);
     }
-    await pool.query('INSERT INTO seedmigrations (name, run_on) VALUES ($1, NOW())', [file]);
+
+    await pool.query(
+      'INSERT INTO seedmigrations (name, run_on) VALUES ($1, NOW())',
+      [file]
+    );
     console.log(`Seed aplicado: ${file}`);
   }
 
+  // Manejo del usuario admin
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
   const { rows: existing } = await pool.query(
@@ -88,9 +101,9 @@ async function main() {
   } catch (err) {
     console.error('Error al ejecutar seeds:', err.message);
     process.exit(1);
+  } finally {
+    await pool.end();
   }
-
-  await pool.end();
 }
 
 if (require.main === module) {
