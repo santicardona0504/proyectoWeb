@@ -1,5 +1,5 @@
 const pool = require('../config/db');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { success, error } = require('../utils/jsonResponse');
 const logger = require('../utils/logger');
 
