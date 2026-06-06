@@ -1,12 +1,20 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+function sanitizeUrl(url) {
+  if (!url) return '(no definida)';
+  return url.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@');
+}
+
 async function main() {
   console.log('[startup] ========================================');
   console.log('[startup] Iniciando migraciones, seed y servidor...');
   console.log('[startup] ========================================');
   console.log('[startup] NODE_ENV:', process.env.NODE_ENV);
   console.log('[startup] DATABASE_URL presente:', !!process.env.DATABASE_URL);
+  if (process.env.DATABASE_URL) {
+    console.log('[startup] DATABASE_URL (oculta):', sanitizeUrl(process.env.DATABASE_URL));
+  }
 
   const DATABASE_URL = process.env.DATABASE_URL;
   const isProduction = process.env.NODE_ENV === 'production';

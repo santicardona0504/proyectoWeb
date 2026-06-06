@@ -2,7 +2,13 @@ const jwt = require('jsonwebtoken');
 const { error } = require('../utils/jsonResponse');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const REFRESH_SECRET = process.env.REFRESH_SECRET || JWT_SECRET;
+const REFRESH_SECRET = process.env.REFRESH_SECRET;
+
+if (!REFRESH_SECRET) {
+  const logger = require('../utils/logger');
+  logger.fatal('REFRESH_SECRET no está definido en las variables de entorno');
+  process.exit(1);
+}
 
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';
@@ -97,9 +103,15 @@ function optionalAuth(req, res, next) {
       const decoded = jwt.verify(refreshToken, REFRESH_SECRET);
       const payload = { id: decoded.id, email: decoded.email, rol: decoded.rol };
       const newAccessToken = generateAccessToken(payload);
+      const newRefreshToken = generateRefreshToken(payload);
       res.cookie('access_token', newAccessToken, {
         ...COOKIE_OPTIONS,
         maxAge: 15 * 60 * 1000,
+      });
+      res.cookie('refresh_token', newRefreshToken, {
+        ...COOKIE_OPTIONS,
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
       req.user = decoded;
     } catch {

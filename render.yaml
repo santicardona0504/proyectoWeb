@@ -17,12 +17,22 @@ services:
           name: biblioteca-db
           property: connectionString
       - key: JWT_SECRET
+        # ⚠️ CAMBIAR: Reemplazar por un valor fijo en el Dashboard de Render
+        # Si usás generateValue: true, Render genera uno nuevo en CADA deploy
+        # y todas las sesiones se invalidan. Mejor poner un valor fijo como:
+        # value: "tu-clave-segura-aqui-cambiar-en-produccion"
         generateValue: true
       - key: REFRESH_SECRET
+        # ⚠️ CAMBIAR: Debe ser DIFERENTE a JWT_SECRET
+        # Ejemplo: value: "otra-clave-segura-diferente-a-jwt"
         generateValue: true
       - key: CORS_ORIGIN
+        # Dejar vacío si el frontend está en el mismo dominio que el backend
+        # Si usás dominio personalizado, ponelo acá, ej: https://tudominio.com
         sync: false
       - key: ADMIN_PASSWORD
+        # ⚠️ CAMBIAR: Reemplazar por una contraseña segura para el admin
+        # Ejemplo: value: "una-contraseña-muy-segura-123"
         sync: false
 
 databases:

@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { success, error } = require('../utils/jsonResponse');
 const {
@@ -89,7 +90,6 @@ async function refresh(req, res) {
       return error(res, 'Token de actualización requerido', 401);
     }
 
-    const jwt = require('jsonwebtoken');
     const REFRESH_SECRET = process.env.REFRESH_SECRET || process.env.JWT_SECRET;
 
     const decoded = jwt.verify(refreshToken, REFRESH_SECRET);

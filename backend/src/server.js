@@ -29,10 +29,12 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
+const corsOrigin = process.env.NODE_ENV === 'production'
+  ? (process.env.CORS_ORIGIN || (process.env.RENDER_EXTERNAL_HOSTNAME ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : 'https://biblioteca.onrender.com'))
+  : 'http://localhost:4200';
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? (process.env.CORS_ORIGIN || `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`)
-    : 'http://localhost:4200',
+  origin: corsOrigin,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -82,12 +84,15 @@ app.use(express.static(PUBLIC_DIR, {
   maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
 }));
 
-app.get('/{*path}', (req, res) => {
+app.all('/{*path}', (req, res) => {
   const apiPatterns = ['/auth', '/books', '/loans', '/users', '/health', '/api-docs'];
   if (apiPatterns.some(p => req.path.startsWith(p)) || path.extname(req.path)) {
     return error(res, 'Ruta no encontrada', 404);
   }
   const indexPath = path.join(PUBLIC_DIR, 'index.html');
+  if (req.method !== 'GET') {
+    return error(res, `Método ${req.method} no permitido`, 405);
+  }
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
   } else {
@@ -97,7 +102,7 @@ app.get('/{*path}', (req, res) => {
 
 app.use((err, _req, res, _next) => {
   logger.error({ err }, 'Error no manejado');
-  error(res, 'Error interno del servidor', 500);
+  return error(res, 'Error interno del servidor', 500);
 });
 
 const server = app.listen(PORT, () => {

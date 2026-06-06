@@ -4,6 +4,7 @@ const authController = require('../controllers/authController');
 const loansController = require('../controllers/loansController');
 const usersController = require('../controllers/usersController');
 const { verifyToken, optionalAuth, requireRole } = require('../middleware/auth');
+const { error } = require('../utils/jsonResponse');
 
 const router = Router();
 
@@ -36,5 +37,9 @@ router.post('/books', verifyToken, requireRole('admin'), booksController.create)
 router.put('/books/:id', verifyToken, requireRole('admin'), booksController.update);
 router.patch('/books/:id', verifyToken, requireRole('admin'), booksController.patch);
 router.delete('/books/:id', verifyToken, requireRole('admin'), booksController.remove);
+
+router.use((req, res) => {
+  return error(res, 'Ruta no encontrada', 404);
+});
 
 module.exports = router;

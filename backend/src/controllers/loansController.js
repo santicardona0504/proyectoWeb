@@ -12,11 +12,20 @@ async function create(req, res) {
       return error(res, 'book_id y nombre_usuario son obligatorios', 400);
     }
 
+    const bookId = parseInt(book_id, 10);
+    if (isNaN(bookId) || bookId < 1) {
+      return error(res, 'book_id debe ser un número entero positivo', 400);
+    }
+
+    if (typeof nombre_usuario !== 'string' || nombre_usuario.trim().length > 255) {
+      return error(res, 'nombre_usuario debe ser un texto de hasta 255 caracteres', 400);
+    }
+
     await client.query('BEGIN');
 
     const book = await client.query(
       'SELECT id, disponible FROM books WHERE id = $1 FOR UPDATE',
-      [book_id]
+      [bookId]
     );
 
     if (book.rows.length === 0) {
@@ -32,10 +41,10 @@ async function create(req, res) {
     const result = await client.query(
       `INSERT INTO prestamos (book_id, nombre_usuario, usuario_id)
        VALUES ($1, $2, $3) RETURNING *`,
-      [book_id, nombre_usuario.trim(), req.user?.id || null]
+      [bookId, nombre_usuario.trim(), req.user?.id || null]
     );
 
-    await client.query('UPDATE books SET disponible = false WHERE id = $1', [book_id]);
+    await client.query('UPDATE books SET disponible = false WHERE id = $1', [bookId]);
 
     await client.query('COMMIT');
 

@@ -9,7 +9,12 @@ const openapiSpec = {
     description: 'API REST para gestión de biblioteca con autenticación JWT, préstamos y catálogo de libros.',
   },
   servers: [
-    { url: 'http://localhost:3000', description: 'Desarrollo' },
+    {
+      url: process.env.NODE_ENV === 'production'
+        ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME || 'localhost'}`
+        : 'http://localhost:3000',
+      description: process.env.NODE_ENV === 'production' ? 'Producción' : 'Desarrollo',
+    },
   ],
   paths: {
     '/health': {

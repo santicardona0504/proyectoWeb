@@ -1,6 +1,14 @@
 const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
+if (!process.env.DATABASE_URL && !process.env.DB_HOST) {
+  logger.fatal(
+    'No se encontró configuración de base de datos. ' +
+    'Define DATABASE_URL o DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD.'
+  );
+  process.exit(1);
+}
+
 const pool = new Pool(
   process.env.DATABASE_URL
     ? {
@@ -11,7 +19,7 @@ const pool = new Pool(
           : {}),
       }
     : {
-        host: process.env.DB_HOST || 'localhost',
+        host: process.env.DB_HOST,
         port: parseInt(process.env.DB_PORT, 10) || 5432,
         database: process.env.DB_NAME || 'library',
         user: process.env.DB_USER || 'admin',
