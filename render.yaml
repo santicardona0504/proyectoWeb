@@ -1,41 +1,16 @@
-services:
-  - type: web
-    name: biblioteca
-    runtime: node
-    rootDir: backend
-    buildCommand: npm install && npm run build
-    startCommand: node scripts/startup.js
-    healthCheckPath: /health
-    autoDeploy: true
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 3000
-      - key: DATABASE_URL
-        fromDatabase:
-          name: biblioteca-db
-          property: connectionString
-      - key: JWT_SECRET
-        # ⚠️ CAMBIAR: Reemplazar por un valor fijo en el Dashboard de Render
-        # Si usás generateValue: true, Render genera uno nuevo en CADA deploy
-        # y todas las sesiones se invalidan. Mejor poner un valor fijo como:
-        # value: "tu-clave-segura-aqui-cambiar-en-produccion"
-        generateValue: true
-      - key: REFRESH_SECRET
-        # ⚠️ CAMBIAR: Debe ser DIFERENTE a JWT_SECRET
-        # Ejemplo: value: "otra-clave-segura-diferente-a-jwt"
-        generateValue: true
-      - key: CORS_ORIGIN
-        # Dejar vacío si el frontend está en el mismo dominio que el backend
-        # Si usás dominio personalizado, ponelo acá, ej: https://tudominio.com
-        sync: false
-      - key: ADMIN_PASSWORD
-        # ⚠️ CAMBIAR: Reemplazar por una contraseña segura para el admin
-        # Ejemplo: value: "una-contraseña-muy-segura-123"
-        sync: false
-
-databases:
-  - name: biblioteca-db
-    databaseName: library
-    plan: free
+# Exported from Render on 2026-06-06T02:23:40Z
+version: "1"
+projects:
+- name: My project
+  environments:
+  - name: Production
+    databases:
+    - name: biblioteca-db
+      databaseName: library_oxrr
+      user: admin
+      plan: free
+      region: oregon
+      ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+      postgresMajorVersion: "18"
