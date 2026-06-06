@@ -46,7 +46,7 @@ jobs:
         run: npm ci
 
       - name: Run migrations
-        run: npm run migrate:up
+        run: npm run migrate
         env:
           DB_HOST: localhost
           DB_PORT: 5432

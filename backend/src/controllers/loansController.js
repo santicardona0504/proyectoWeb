@@ -3,8 +3,9 @@ const { success, error } = require('../utils/jsonResponse');
 const logger = require('../utils/logger');
 
 async function create(req, res) {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     const { book_id, nombre_usuario } = req.body;
 
     if (!book_id || !nombre_usuario) {
@@ -40,17 +41,18 @@ async function create(req, res) {
 
     success(res, result.rows[0], 201);
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK');
     logger.error({ err }, 'Error en create loan');
     error(res, 'Error al registrar préstamo', 500);
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 
 async function returnBook(req, res) {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     const { id } = req.body;
     if (!id) {
       return error(res, 'id del préstamo es obligatorio', 400);
@@ -75,11 +77,11 @@ async function returnBook(req, res) {
 
     success(res, loan.rows[0]);
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK');
     logger.error({ err }, 'Error en returnBook');
     error(res, 'Error al devolver libro', 500);
   } finally {
-    client.release();
+    if (client) client.release();
   }
 }
 

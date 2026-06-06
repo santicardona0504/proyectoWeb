@@ -15,7 +15,7 @@
     "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.3",
+    "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
