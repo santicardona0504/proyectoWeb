@@ -14,6 +14,17 @@ async function main() {
   console.log('[startup] DATABASE_URL presente:', !!process.env.DATABASE_URL);
   if (process.env.DATABASE_URL) {
     console.log('[startup] DATABASE_URL (oculta):', sanitizeUrl(process.env.DATABASE_URL));
+  } else {
+    console.log('[startup] DB_HOST:', process.env.DB_HOST || '(no definido)');
+    console.log('[startup] DB_PORT:', process.env.DB_PORT || '(no definido)');
+  }
+
+  if (!process.env.DATABASE_URL && !process.env.DB_HOST) {
+    console.error('[startup] ERROR FATAL: No hay DATABASE_URL ni DB_HOST definidos.');
+    console.error('[startup] En Render, asegúrate de que el servicio de base de datos');
+    console.error('[startup] esté creado en https://dashboard.render.com -> PostgreSQL');
+    console.error('[startup] y vinculado al servicio web.');
+    process.exit(1);
   }
 
   const DATABASE_URL = process.env.DATABASE_URL;
