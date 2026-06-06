@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "build": "cd ../frontend && npm install && npm run build && mkdir -p ../backend/public && rm -rf ../backend/public/* && cp -r dist/frontend/browser/* ../backend/public/",
+    "build": "mkdir -p public && echo 'Backend API - Frontend servido por separado' > public/index.html",
     "migrate": "node scripts/migrate.js",
     "migrate:create": "node-pg-migrate create --config pgmconfig.js --migration-file-language sql",
     "seed": "node scripts/run-seed.js",

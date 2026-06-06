@@ -29,9 +29,11 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-const corsOrigin = process.env.NODE_ENV === 'production'
-  ? (process.env.CORS_ORIGIN || (process.env.RENDER_EXTERNAL_HOSTNAME ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : 'https://biblioteca.onrender.com'))
-  : 'http://localhost:4200';
+const corsOrigin = process.env.CORS_ORIGIN || (
+  process.env.NODE_ENV === 'production'
+    ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME || 'biblioteca-api.onrender.com'}`
+    : 'http://localhost:4200'
+);
 
 app.use(cors({
   origin: corsOrigin,
